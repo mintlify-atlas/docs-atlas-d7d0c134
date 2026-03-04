@@ -1,0 +1,116 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "OpenComic AI Bin",
+  "projectDescription": "Node.js library providing pre-built AI binaries for image upscaling, dehalftoning, and artifact removal using Real-CUGAN, Real-ESRGAN, Waifu2x, and Upscayl models.",
+  "theme": "palm",
+  "primaryColor": "#6366f1",
+  "lightColor": "#818cf8",
+  "darkColor": "#4f46e5",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/basic-usage",
+              "guides/pipeline-processing",
+              "guides/model-selection",
+              "guides/daemon-mode",
+              "guides/icc-profile"
+            ]
+          },
+          {
+            "group": "Models",
+            "pages": [
+              "models/overview",
+              "models/upscale",
+              "models/descreen",
+              "models/artifact-removal",
+              "models/performance"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Core API",
+            "pages": [
+              "api/pipeline",
+              "api/preload",
+              "api/binary",
+              "api/model",
+              "api/closest"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "api/set-models-path",
+              "api/set-dirname",
+              "api/set-concurrent-daemons",
+              "api/set-daemon-idle-timeout",
+              "api/close-all-daemons",
+              "api/keep-icc-profile"
+            ]
+          },
+          {
+            "group": "Properties",
+            "pages": [
+              "api/models",
+              "api/models-list",
+              "api/models-type-list",
+              "api/models-path",
+              "api/dirname"
+            ]
+          },
+          {
+            "group": "Types",
+            "pages": [
+              "api/types"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "AI-powered image upscaling with multiple models (Real-CUGAN, Real-ESRGAN, Waifu2x, Upscayl)",
+    "Dehalftoning and descreening for comic/manga images",
+    "Artifact removal and JPEG restoration",
+    "Multi-step pipeline processing",
+    "Daemon mode for optimized performance",
+    "Cross-platform binaries (Linux, macOS, Windows on x64/arm64)",
+    "ICC color profile preservation",
+    "Automatic model downloading"
+  ],
+  "publicApiSurface": [
+    "OpenComicAI.pipeline()",
+    "OpenComicAI.preload()",
+    "OpenComicAI.setModelsPath()",
+    "OpenComicAI.setDirname()",
+    "OpenComicAI.setConcurrentDaemons()",
+    "OpenComicAI.setDaemonIdleTimeout()",
+    "OpenComicAI.closeAllDaemons()",
+    "OpenComicAI.keepIccProfile()",
+    "OpenComicAI.binary()",
+    "OpenComicAI.model()",
+    "OpenComicAI.closest()",
+    "OpenComicAI.models",
+    "OpenComicAI.modelsList",
+    "OpenComicAI.modelsTypeList",
+    "OpenComicAI.modelsPath",
+    "OpenComicAI.__dirname"
+  ]
+}
