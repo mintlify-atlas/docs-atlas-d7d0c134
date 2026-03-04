@@ -1,0 +1,126 @@
+---
+title: Models overview
+description: Overview of AI models available in OpenComic AI Bin
+---
+
+OpenComic AI Bin provides a comprehensive library of AI models for image processing, specifically optimized for comic book and manga content. All models are automatically downloaded when needed.
+
+## Model types
+
+The library organizes models into three main categories:
+
+### Upscale models
+
+Upscaling models increase image resolution while preserving or enhancing quality. These models can scale images by 2x, 3x, 4x, or higher factors depending on the specific model.
+
+[Learn more about upscale models](/models/upscale)
+
+### Descreen models
+
+Descreening (also called dehalftoning) models remove halftone patterns and dot screens commonly found in printed comics and manga. These models operate at 1x scale and are typically applied before upscaling.
+
+[Learn more about descreen models](/models/descreen)
+
+### Artifact removal models
+
+Artifact removal models clean up JPEG compression artifacts, blur, and other image degradation. These models are essential for restoring quality to compressed comic scans.
+
+[Learn more about artifact removal models](/models/artifact-removal)
+
+## Model organization
+
+Models are accessed through the `OpenComicAI.models` object, which is organized by type:
+
+```typescript
+OpenComicAI.models = {
+  upscale: { /* upscaling models */ },
+  descreen: { /* descreening models */ },
+  'artifact-removal': { /* artifact removal models */ }
+}
+```
+
+You can also get a flat array of all available model names:
+
+```typescript
+const allModels = OpenComicAI.modelsList;
+```
+
+## Automatic model downloading
+
+Model files are not included with the package. Instead, they are downloaded automatically when first used:
+
+1. **Set models path**: Configure where models should be stored
+2. **Use a model**: When you first reference a model in your pipeline
+3. **Automatic download**: The library downloads the required model files
+4. **Local caching**: Models are saved for future use
+
+```typescript
+// Set the directory for model storage
+OpenComicAI.setModelsPath('./models');
+
+// Use a model - it will download automatically if not found
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'realcugan', scale: 4, noise: 0 }
+], progressCallback, {
+  start: () => console.log('Starting download'),
+  progress: (p) => console.log(`Downloading: ${Math.round(p * 100)}%`),
+  end: () => console.log('Download complete')
+});
+```
+
+<Note>
+If you prefer to install all models upfront, use the [`opencomic-ai-models`](https://github.com/ollm/opencomic-ai-models) package.
+</Note>
+
+## Upscaler types
+
+Models use one of three upscaler engines:
+
+<CardGroup cols={3}>
+  <Card title="realcugan" icon="wand-magic-sparkles">
+    Advanced upscaling with noise reduction controls. Supports scales 2x, 3x, 4x with noise levels 0-3.
+  </Card>
+  <Card title="waifu2x" icon="image">
+    Flexible upscaling supporting 2x, 4x, 8x, 16x, 32x scales with noise levels 0-3.
+  </Card>
+  <Card title="upscayl" icon="arrow-up-right-dots">
+    Fast, general-purpose upscaling. Most models support 2x, 3x, 4x scales. Used by most models in the library.
+  </Card>
+</CardGroup>
+
+## Model properties
+
+Each model in the library includes the following properties:
+
+| Property | Description |
+|----------|-------------|
+| `name` | Human-readable model name |
+| `upscaler` | Engine type: `realcugan`, `waifu2x`, or `upscayl` |
+| `scales` | Array of supported scale factors |
+| `noise` | Noise reduction levels (or `undefined` if not supported) |
+| `latency` | Average processing time in seconds for a single image |
+| `folder` | Directory containing model files |
+| `files` | Array of model file names |
+
+## Performance considerations
+
+Model performance varies significantly. The library includes latency data for each model to help you choose the right balance between speed and quality.
+
+[View performance comparison](/models/performance)
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Upscale models" icon="maximize" href="/models/upscale">
+    Explore 30+ upscaling models
+  </Card>
+  <Card title="Descreen models" icon="grid" href="/models/descreen">
+    Remove halftone patterns
+  </Card>
+  <Card title="Artifact removal" icon="sparkles" href="/models/artifact-removal">
+    Clean up compression artifacts
+  </Card>
+  <Card title="Performance" icon="gauge-high" href="/models/performance">
+    Compare model speeds
+  </Card>
+</CardGroup>

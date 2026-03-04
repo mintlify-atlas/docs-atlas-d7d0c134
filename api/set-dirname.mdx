@@ -1,0 +1,69 @@
+---
+title: setDirname()
+description: Configure the package root directory path
+---
+
+Sets the root directory path for the OpenComic AI package. This is primarily used in bundled or packaged applications where the package location differs from the default.
+
+## Syntax
+
+```typescript
+OpenComicAI.setDirname(dirname: string): void
+```
+
+## Parameters
+
+<ParamField path="dirname" type="string" required>
+  Path to the package root directory. Can be absolute or relative.
+</ParamField>
+
+## Returns
+
+`void` - This method does not return a value.
+
+## Behavior
+
+- The path is resolved to an absolute path automatically
+- Used internally to locate binaries and resources
+- Essential for bundled applications where `__dirname` may not reflect the actual package location
+
+## Example
+
+```typescript
+import OpenComicAI from '@opencomic/ai-bin';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES modules pattern
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+OpenComicAI.setDirname(__dirname);
+```
+
+## Use cases
+
+### Electron applications
+
+```typescript
+import { app } from 'electron';
+
+// Set dirname to the app's resource path
+OpenComicAI.setDirname(app.getAppPath());
+```
+
+### Packaged applications
+
+```typescript
+// When using pkg or similar bundlers
+OpenComicAI.setDirname(process.cwd());
+```
+
+## Related
+
+- [setModelsPath()](/api/set-models-path) - Configure models directory
+- [Installation](/installation) - Setup and configuration
+
+## Source
+
+Defined in index.mts:769-773

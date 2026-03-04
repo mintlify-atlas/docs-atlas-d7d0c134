@@ -1,0 +1,162 @@
+---
+title: Descreen models
+description: AI models for removing halftone patterns and dot screens from comics
+---
+
+Descreening (also called dehalftoning) models remove halftone patterns and dot screens commonly found in printed comics and manga. These artifacts appear as visible dot matrices used in traditional printing processes.
+
+## What is descreening?
+
+Halftone patterns are printing techniques that simulate continuous tones using dots of varying sizes or densities. While necessary for print, these patterns create visual artifacts in digital scans. Descreening models remove these patterns while preserving image detail.
+
+## Available models
+
+All descreening models operate at 1x scale and should typically be applied before upscaling.
+
+### OpenComic AI Descreen Hard Compact
+
+- **Model ID**: `opencomic-ai-descreen-hard-compact`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 0.52s (Very Fast)
+- **Source**: [ollm/opencomic-ai-training](https://github.com/ollm/opencomic-ai-training)
+
+Compact model optimized for aggressive halftone removal. Best for heavy halftone patterns with hard edges.
+
+**Use cases**:
+- Printed comics with visible dot patterns
+- Newspaper comics
+- Low-quality magazine scans
+
+### OpenComic AI Descreen Hard Lite
+
+- **Model ID**: `opencomic-ai-descreen-hard-lite`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 3.0s (Fast)
+- **Source**: [ollm/opencomic-ai-training](https://github.com/ollm/opencomic-ai-training)
+
+Larger model with improved quality for hard halftone patterns. Provides better detail preservation than the compact variant.
+
+**Use cases**:
+- High-quality descreening when processing time is not critical
+- Complex halftone patterns requiring careful removal
+- Professional restoration work
+
+### Halftone Patch 060000 G
+
+- **Model ID**: `1x_halftone_patch_060000_G`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 8.26s (Slow)
+- **Source**: [NMKD.de](https://nmkd.de/shared/?dir=ESRGAN/Models/Compression/Halftone)
+
+Community model trained specifically for halftone removal. Higher latency but excellent quality.
+
+**Use cases**:
+- General-purpose halftone removal
+- Vintage comic book scans
+- Mixed halftone patterns
+
+### WTP DescreenTon Compact
+
+- **Model ID**: `1x_wtp_descreenton_compact`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 0.51s (Very Fast)
+- **Source**: [OpenModelDB](https://openmodeldb.info/models/1x-wtp-descreentone-compact)
+
+Ultra-fast compact model for screentone removal, particularly effective on manga.
+
+**Use cases**:
+- Manga with screentones
+- Batch processing requiring speed
+- Real-time descreening workflows
+
+## Using descreen models
+
+### Basic descreening
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'opencomic-ai-descreen-hard-compact' }
+]);
+```
+
+### Descreen then upscale
+
+For best results, apply descreening before upscaling:
+
+```typescript
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'opencomic-ai-descreen-hard-compact' },
+  { model: 'realcugan', scale: 4, noise: 0 }
+]);
+```
+
+### Complete restoration pipeline
+
+Combine descreening with artifact removal and upscaling:
+
+```typescript
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'opencomic-ai-descreen-hard-compact' },
+  { model: 'opencomic-ai-artifact-removal-compact' },
+  { model: 'realesrgan-x4plus-anime', scale: 4 }
+]);
+```
+
+<Tip>
+Always apply descreening models before upscaling. Upscaling halftone patterns will make them more visible and harder to remove.
+</Tip>
+
+## Performance comparison
+
+| Model | Latency | Speed Category | Best For |
+|-------|---------|----------------|----------|
+| `1x_wtp_descreenton_compact` | 0.51s | Very Fast | Manga screentones, batch processing |
+| `opencomic-ai-descreen-hard-compact` | 0.52s | Very Fast | Hard halftones, general use |
+| `opencomic-ai-descreen-hard-lite` | 3.0s | Fast | Quality-focused descreening |
+| `1x_halftone_patch_060000_G` | 8.26s | Slow | Complex patterns, archival quality |
+
+## Choosing the right descreen model
+
+**For manga screentones**: Use `1x_wtp_descreenton_compact`
+
+**For printed comics**: Use `opencomic-ai-descreen-hard-compact`
+
+**For quality over speed**: Use `opencomic-ai-descreen-hard-lite`
+
+**For complex patterns**: Use `1x_halftone_patch_060000_G`
+
+**For batch processing**: Use `1x_wtp_descreenton_compact` or `opencomic-ai-descreen-hard-compact`
+
+## How descreening works
+
+Descreening models are trained to:
+
+1. **Detect halftone patterns**: Identify dot matrices, screentones, and other printing artifacts
+2. **Remove patterns**: Eliminate visible dots while preserving underlying tones
+3. **Restore detail**: Reconstruct smooth gradients and textures
+4. **Preserve edges**: Maintain sharp lines and text clarity
+
+<Note>
+Descreening models work at 1x scale, meaning they don't increase image resolution. They only remove patterns and artifacts.
+</Note>
+
+## Common patterns removed
+
+- **Halftone dots**: Regular dot patterns used in printing
+- **Screentones**: Manga shading patterns
+- **Moire patterns**: Interference patterns from scanning
+- **Dithering**: Color approximation patterns
+- **Print artifacts**: Registration issues and ink spread
+
+## Related pages
+
+- [Upscale models](/models/upscale) - Increase image resolution
+- [Artifact removal](/models/artifact-removal) - Remove compression artifacts
+- [Pipeline API](/api/pipeline) - Combine multiple models
+- [Performance](/models/performance) - Model speed comparison

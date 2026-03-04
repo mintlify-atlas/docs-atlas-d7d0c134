@@ -1,0 +1,287 @@
+---
+title: Model selection
+description: Choose the right AI model for your image processing needs
+---
+
+## Overview
+
+OpenComic AI Bin includes dozens of AI models optimized for different tasks. Understanding which model to use for your specific needs is key to achieving the best results.
+
+## Model types
+
+Models are organized into three categories:
+
+```typescript
+type ModelType = 'upscale' | 'descreen' | 'artifact-removal';
+```
+
+You can access models by type:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+// All models by type
+const upscaleModels = OpenComicAI.modelsTypeList.upscale;
+const descreenModels = OpenComicAI.modelsTypeList.descreen;
+const artifactModels = OpenComicAI.modelsTypeList['artifact-removal'];
+
+// Get detailed info about a specific model
+const modelInfo = OpenComicAI.model('realcugan');
+console.log(modelInfo);
+// {
+//   name: 'RealCUGAN',
+//   upscaler: 'realcugan',
+//   type: 'upscale',
+//   scales: [2, 3, 4],
+//   noise: [0, 3],
+//   latency: 2.96,
+//   speed: 'Fast',
+//   ...
+// }
+```
+
+### Upscale models
+
+Upscale models increase image resolution while preserving or enhancing quality. They're optimized for different content types:
+
+- **Anime/Comic content**: `realcugan`, `realesrgan-x4plus-anime`, `waifu2x-models-cunet`
+- **General purpose**: `realesrgan-x4plus`, `realesrnet-x4plus`
+- **Photography**: `4xNomosWebPhoto_esrgan`, `RealESRGAN_General_x4_v3`
+
+### Descreen models
+
+Descreen (dehalftoning) models remove halftone patterns commonly found in scanned comics and manga:
+
+- `opencomic-ai-descreen-hard-compact` - Fast, good quality (0.52 latency)
+- `opencomic-ai-descreen-hard-lite` - Higher quality, slower (3.0 latency)
+- `1x_halftone_patch_060000_G` - Comprehensive dehalftoning (8.26 latency)
+- `1x_wtp_descreenton_compact` - Fast alternative (0.51 latency)
+
+### Artifact removal models
+
+Artifact removal models clean up JPEG compression artifacts and other image degradation:
+
+- `opencomic-ai-artifact-removal-compact` - Very fast (0.5 latency)
+- `opencomic-ai-artifact-removal-lite` - Balanced speed/quality (2.97 latency)
+- `opencomic-ai-artifact-removal` - Highest quality (8.21 latency)
+- `1x-SaiyaJin-DeJpeg` - JPEG-specific cleanup (8.2 latency)
+
+## Performance vs quality tradeoffs
+
+Every model has a `latency` value indicating relative processing speed (measured on a reference system):
+
+```typescript
+type Speed = 'Very Fast' | 'Fast' | 'Medium' | 'Slow' | 'Very Slow';
+```
+
+Speed categories are based on latency:
+
+- **Very Fast** (≤1.0): `realesr-animevideov3`, `4xLSDIRCompactC3`, `RealESRGAN_General_x4_v3`
+- **Fast** (1.01-4.0): `realcugan`, `waifu2x-models-upconv`, `opencomic-ai-artifact-removal-lite`
+- **Medium** (4.01-7.0): `waifu2x-models-cunet`
+- **Slow** (7.01-10.0): `realesrgan-x4plus`, `ultrasharp-4x`, `unknown-2.0.1`
+
+### Performance comparison
+
+Here are some popular models ranked by speed:
+
+| Model | Latency | Speed | Type |
+|-------|---------|-------|------|
+| `opencomic-ai-artifact-removal-compact` | 0.5 | Very Fast | artifact-removal |
+| `1x_wtp_descreenton_compact` | 0.51 | Very Fast | descreen |
+| `opencomic-ai-descreen-hard-compact` | 0.52 | Very Fast | descreen |
+| `4xLSDIRCompactC3` | 1.31 | Very Fast | upscale |
+| `RealESRGAN_General_x4_v3` | 1.35 | Very Fast | upscale |
+| `realesr-animevideov3` | 1.36 | Very Fast | upscale |
+| `realcugan` | 2.96 | Fast | upscale |
+| `waifu2x-models-upconv` | 2.61 | Fast | upscale |
+| `realesrgan-x4plus-anime` | 3.61 | Fast | upscale |
+| `waifu2x-models-cunet` | 5.2 | Medium | upscale |
+| `realesrgan-x4plus` | 9.44 | Slow | upscale |
+| `ultrasharp-4x` | 9.73 | Slow | upscale |
+| `unknown-2.0.1` | 9.87 | Slow | upscale |
+
+<Tip>
+For batch processing, faster models can process many more images in the same time. Consider using "compact" or "lite" variants when processing large volumes.
+</Tip>
+
+## When to use which upscaler
+
+The three upscaler binaries (`realcugan`, `waifu2x`, `upscayl`) have different characteristics:
+
+### realcugan
+
+**Binary**: `realcugan-ncnn-vulkan`
+
+**Models**: `realcugan`
+
+**Best for**:
+- Anime and comic book artwork
+- When you need noise reduction (denoising) alongside upscaling
+- Fast processing with good quality
+
+**Scales**: 2x, 3x, 4x
+
+**Noise levels**: 0 (none), 3 (conservative, denoise1x, denoise2x, denoise3x)
+
+**Example**:
+```typescript
+{
+  model: 'realcugan',
+  scale: 4,
+  noise: 3, // Heavy denoising
+}
+```
+
+### waifu2x
+
+**Binary**: `waifu2x-ncnn-vulkan`
+
+**Models**: `waifu2x-models-cunet`, `waifu2x-models-upconv`
+
+**Best for**:
+- Anime-style artwork
+- High upscaling factors (up to 32x)
+- Fine-grained noise control (4 levels)
+
+**Scales**: 2x, 4x, 8x, 16x, 32x
+
+**Noise levels**: 0, 1, 2, 3
+
+**Example**:
+```typescript
+{
+  model: 'waifu2x-models-cunet',
+  scale: 8, // Very high upscaling
+  noise: 2,
+}
+```
+
+<Note>
+`waifu2x-models-upconv` is faster than `waifu2x-models-cunet` but may produce slightly lower quality results.
+</Note>
+
+### upscayl
+
+**Binary**: `upscayl-bin`
+
+**Models**: All other models (40+ models available)
+
+**Best for**:
+- Widest variety of use cases
+- Specialized tasks (dehalftoning, artifact removal)
+- Daemon mode for batch processing (see [daemon mode guide](/guides/daemon-mode))
+
+**Scales**: Varies by model (most support 2x, 3x, 4x)
+
+**Noise levels**: Not supported
+
+**Example**:
+```typescript
+{
+  model: 'realesr-animevideov3',
+  scale: 4,
+}
+```
+
+<Tip>
+Only upscayl-based models support [daemon mode](/guides/daemon-mode), which can provide 3-7x performance improvements for batch processing.
+</Tip>
+
+## Choosing a model for your use case
+
+### Scanned comic books
+
+```typescript
+// Fast processing
+[
+  { model: 'opencomic-ai-descreen-hard-compact' },
+  { model: 'realesr-animevideov3', scale: 4 },
+]
+
+// Higher quality
+[
+  { model: '1x_halftone_patch_060000_G' },
+  { model: 'realcugan', scale: 4, noise: 0 },
+]
+```
+
+### Digital manga with JPEG artifacts
+
+```typescript
+// Balanced
+[
+  { model: 'opencomic-ai-artifact-removal-compact' },
+  { model: 'realesrgan-x4plus-anime', scale: 4 },
+]
+
+// Maximum quality
+[
+  { model: 'opencomic-ai-artifact-removal' },
+  { model: 'realcugan', scale: 4, noise: 0 },
+]
+```
+
+### Clean digital artwork
+
+```typescript
+// Fast
+[
+  { model: 'realesr-animevideov3', scale: 4 },
+]
+
+// High quality
+[
+  { model: 'realcugan', scale: 4, noise: 0 },
+]
+
+// Maximum quality (slower)
+[
+  { model: 'realesrgan-x4plus-anime', scale: 4 },
+]
+```
+
+### Photography and realistic images
+
+```typescript
+// General purpose
+[
+  { model: 'RealESRGAN_General_x4_v3', scale: 4 },
+]
+
+// Web photos
+[
+  { model: '4xNomosWebPhoto_esrgan', scale: 4 },
+]
+
+// High quality
+[
+  { model: 'realesrgan-x4plus', scale: 4 },
+]
+```
+
+## Platform compatibility
+
+Check if a model is supported on your current platform:
+
+```typescript
+const modelInfo = OpenComicAI.model('realcugan');
+if (modelInfo.supportCurrentPlatform) {
+  console.log('Model is supported on this platform');
+} else {
+  console.log('Model is not available for your OS/architecture');
+}
+```
+
+All three upscalers support:
+- **macOS**: x64, arm64
+- **Windows**: x64
+- **Linux**: x64, arm64
+
+Note: `upscayl-bin` also supports Windows arm64.
+
+## Next steps
+
+- Learn about [pipeline processing](/guides/pipeline-processing) to combine multiple models
+- Explore [daemon mode](/guides/daemon-mode) for faster batch processing with upscayl models
+- Review [basic usage](/guides/basic-usage) for detailed option descriptions

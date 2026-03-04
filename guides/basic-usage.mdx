@@ -1,0 +1,260 @@
+---
+title: Basic usage
+description: Learn how to process images with OpenComic AI Bin using a single model
+---
+
+## Overview
+
+OpenComic AI Bin provides a simple API for processing images with AI models. At its core, the library uses the `pipeline` method to process images through one or more AI models.
+
+## Setting up the library
+
+Before processing images, you need to configure the library with the necessary paths:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+// Set the models directory (models will be downloaded here if not present)
+OpenComicAI.setModelsPath('./models');
+```
+
+### Electron apps
+
+For Electron applications, you may need to adjust the binary directory to point to the unpacked asar location:
+
+```typescript
+OpenComicAI.setDirname(
+  OpenComicAI.__dirname.replace(/app(-(?:arm64|x64))?\.asar/, 'app$1.asar.unpacked')
+);
+```
+
+## Processing a single image
+
+To process an image with a single model, use the `pipeline` method with one step:
+
+```typescript
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  {
+    model: 'realcugan',
+    scale: 2,
+    noise: 0,
+  }
+]);
+```
+
+## Supported image formats
+
+OpenComic AI Bin supports a wide range of image formats:
+
+- **Common formats**: `jpg`, `jpeg`, `jpe`, `png`, `webp`
+- **TIFF formats**: `tif`, `tiff`
+- **Bitmap formats**: `bmp`, `dib`
+- **HDR formats**: `exr`, `hdr`
+- **PNM formats**: `pbm`, `pgm`, `ppm`, `pnm`, `pxm`
+- **Other formats**: `pic`, `ras`, `sr`
+
+The output format is determined by the file extension of the destination path.
+
+## Basic options
+
+The `OpenComicAIOptions` interface provides several options to control image processing:
+
+### model
+
+The AI model to use for processing. See the [model selection guide](/guides/model-selection) for details on available models.
+
+```typescript
+{
+  model: 'realcugan' // or any other available model
+}
+```
+
+### scale
+
+The upscaling factor. Different models support different scale values:
+
+- `realcugan`: 2, 3, 4
+- `waifu2x-models-cunet`: 2, 4, 8, 16, 32
+- Most upscayl models: 2, 3, 4
+- Descreen and artifact-removal models: 1 (no scaling)
+
+```typescript
+{
+  model: 'realcugan',
+  scale: 4 // 4x upscaling
+}
+```
+
+<Note>
+If you specify a scale value not supported by the model, the library will automatically select the closest available scale.
+</Note>
+
+### noise
+
+Noise reduction level (0-3). Only supported by `realcugan` and `waifu2x` models:
+
+- `0`: No denoising
+- `1`: Light denoising
+- `2`: Medium denoising
+- `3`: Heavy denoising
+
+```typescript
+{
+  model: 'realcugan',
+  scale: 2,
+  noise: 3 // Maximum noise reduction
+}
+```
+
+### tileSize
+
+Controls the tile size for processing. Smaller tiles use less VRAM but may be slower:
+
+```typescript
+{
+  model: 'realcugan',
+  scale: 2,
+  tileSize: 256 // Process in 256x256 tiles
+}
+```
+
+<Tip>
+Reduce tile size if you encounter out-of-memory errors on your GPU.
+</Tip>
+
+### gpuId
+
+Specify which GPU to use for processing (useful for multi-GPU systems):
+
+```typescript
+{
+  model: 'realcugan',
+  scale: 2,
+  gpuId: '0' // Use the first GPU
+}
+```
+
+### threads
+
+Number of CPU threads to use for processing:
+
+```typescript
+{
+  model: 'realcugan',
+  scale: 2,
+  threads: 4 // Use 4 CPU threads
+}
+```
+
+### tta
+
+Enable Test-Time Augmentation for potentially better quality at the cost of 8x slower processing:
+
+```typescript
+{
+  model: 'realcugan',
+  scale: 2,
+  tta: true // Enable TTA mode
+}
+```
+
+<Warning>
+TTA mode significantly increases processing time. Only use it when you need the highest possible quality.
+</Warning>
+
+## Progress callbacks
+
+Monitor the processing progress with a callback function:
+
+```typescript
+await OpenComicAI.pipeline(
+  './input.jpg',
+  './output.jpg',
+  [
+    {
+      model: 'realcugan',
+      scale: 2,
+    }
+  ],
+  (progress) => {
+    console.log(`Processing: ${Math.round(progress * 100)}%`);
+  }
+);
+```
+
+The `progress` parameter is a value between 0 and 1, where 1 represents 100% completion.
+
+## Download callbacks
+
+If a model is not available locally, it will be downloaded automatically. You can monitor the download progress:
+
+```typescript
+await OpenComicAI.pipeline(
+  './input.jpg',
+  './output.jpg',
+  [
+    {
+      model: 'realcugan',
+      scale: 2,
+    }
+  ],
+  undefined, // No processing progress callback
+  {
+    start: () => {
+      console.log('Starting download...');
+    },
+    progress: (progress) => {
+      console.log(`Downloading: ${Math.round(progress * 100)}%`);
+    },
+    end: () => {
+      console.log('Download complete!');
+    },
+  }
+);
+```
+
+## Complete example
+
+Here's a complete example demonstrating single-model processing with all available options:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+async function processImage() {
+  // Configure the library
+  OpenComicAI.setModelsPath('./models');
+
+  // Process the image
+  await OpenComicAI.pipeline(
+    './input.jpg',
+    './output.jpg',
+    [
+      {
+        model: 'realcugan',
+        scale: 4,
+        noise: 0,
+        tileSize: 512,
+        threads: 4,
+      }
+    ],
+    (progress) => {
+      console.log(`Processing: ${Math.round(progress * 100)}%`);
+    },
+    {
+      start: () => console.log('Downloading models...'),
+      progress: (p) => console.log(`Download: ${Math.round(p * 100)}%`),
+      end: () => console.log('Download complete'),
+    }
+  );
+
+  console.log('Image processing complete!');
+}
+
+processImage();
+```
+
+## Next steps
+
+- Learn about [pipeline processing](/guides/pipeline-processing) to chain multiple models
+- Explore [model selection](/guides/model-selection) to choose the right model for your use case
+- Discover [daemon mode](/guides/daemon-mode) for faster batch processing

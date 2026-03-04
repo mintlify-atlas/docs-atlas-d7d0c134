@@ -1,0 +1,96 @@
+---
+title: keepIccProfile()
+description: Enable ICC color profile preservation using Sharp
+---
+
+Configures OpenComic AI to preserve ICC color profiles in output images by integrating with the Sharp image processing library. This ensures color accuracy when upscaling images with embedded color profiles.
+
+## Syntax
+
+```typescript
+OpenComicAI.keepIccProfile(sharp: any, pipelineColourspace?: string): void
+```
+
+## Parameters
+
+<ParamField path="sharp" type="any" required>
+  The Sharp instance to use for ICC profile preservation. Pass the Sharp library object.
+</ParamField>
+
+<ParamField path="pipelineColourspace" type="string" default="rgb16">
+  The color space to use in the Sharp processing pipeline. Common values: `'rgb16'`, `'srgb'`, `'rgb'`.
+</ParamField>
+
+## Returns
+
+`void` - This method does not return a value.
+
+## Behavior
+
+- Integrates Sharp for post-processing upscaled images
+- Preserves embedded ICC color profiles from source images
+- Applies the profile to output images automatically
+- Uses the specified color space for internal processing
+
+## Example
+
+```typescript
+import OpenComicAI from '@opencomic/ai-bin';
+import sharp from 'sharp';
+
+// Enable ICC profile preservation
+OpenComicAI.keepIccProfile(sharp);
+
+// Upscale an image with color profile preservation
+await OpenComicAI.upscale({
+  input: 'photo.jpg',
+  output: 'upscaled-photo.jpg'
+});
+```
+
+## Custom color space
+
+```typescript
+import sharp from 'sharp';
+
+// Use sRGB color space instead of rgb16
+OpenComicAI.keepIccProfile(sharp, 'srgb');
+```
+
+## Why preserve ICC profiles?
+
+ICC profiles ensure consistent color reproduction across different devices and applications. Without preservation:
+- Colors may appear differently than intended
+- Professional photography workflows may break
+- Color-calibrated images lose their calibration
+
+With ICC profile preservation:
+- Original color intent is maintained
+- Professional color accuracy is preserved
+- Images display consistently across platforms
+
+## Installation
+
+This feature requires the Sharp library:
+
+```bash
+npm install sharp
+```
+
+## Color space options
+
+- `'rgb16'` (default) - 16-bit RGB color space, highest quality
+- `'srgb'` - Standard RGB color space
+- `'rgb'` - 8-bit RGB color space
+
+Choose `'rgb16'` for maximum color fidelity, or `'srgb'` for smaller file sizes.
+
+## Related
+
+- [ICC profile guide](/guides/icc-profile) - Detailed color profile documentation
+- [upscale()](/api/pipeline) - Main upscaling method
+- [Sharp documentation](https://sharp.pixelplumbing.com/) - Learn more about Sharp
+
+## Source
+
+Defined in index.mts:826-831

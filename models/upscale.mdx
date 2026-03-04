@@ -1,0 +1,289 @@
+---
+title: Upscale models
+description: AI models for upscaling comic book and manga images
+---
+
+OpenComic AI Bin includes 30+ upscaling models that increase image resolution while preserving or enhancing quality. Each model has different characteristics, performance profiles, and optimal use cases.
+
+## Model categories
+
+Upscaling models are organized by their underlying architecture and purpose:
+
+### RealCUGAN models
+
+Advanced upscaling with noise reduction controls.
+
+#### realcugan
+
+- **Upscaler**: `realcugan`  
+- **Scales**: 2x, 3x, 4x  
+- **Noise levels**: 0, 3  
+- **Latency**: 2.96s  
+- **Source**: [Moebytes/waifu2x](https://github.com/Moebytes/waifu2x/tree/eaadd13cf54ba3bcb3cbd3e4a1cb2cd922420c9b/real-cugan/models-se)
+
+RealCUGAN offers conservative and denoise options at each scale level. Excellent for general-purpose anime and manga upscaling.
+
+### RealESR models
+
+Real-world super-resolution models optimized for anime and video content.
+
+#### realesr-animevideov3
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 1.36s (Very Fast)  
+- **Source**: [xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)
+
+Optimized for anime video frames. One of the fastest models in the library.
+
+### RealESRGAN models
+
+General-purpose super-resolution models with anime-specific variants.
+
+#### realesrgan-x4plus
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.44s (Slow)  
+- **Source**: [xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)
+
+General-purpose model for real photos and artwork. Higher latency but excellent quality.
+
+#### realesrgan-x4plus-anime
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 3.61s (Medium)  
+- **Source**: [xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)
+
+Anime-specialized variant with faster processing than the general model.
+
+#### realesrnet-x4plus
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.35s (Slow)  
+- **Source**: [xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN)
+
+RealESRNet variant focusing on natural image restoration.
+
+#### RealESRGAN_General_WDN_x4_v3
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 1.6s (Very Fast)  
+- **Source**: [upscayl/custom-models](https://github.com/upscayl/custom-models/tree/4b6d2cfa59c7442af115dfc6e50fd8d7d40b96ef/models)
+
+General-purpose model with weak denoising.
+
+#### RealESRGAN_General_x4_v3
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 1.35s (Very Fast)  
+- **Source**: [upscayl/custom-models](https://github.com/upscayl/custom-models/tree/4b6d2cfa59c7442af115dfc6e50fd8d7d40b96ef/models)
+
+Fastest general-purpose RealESRGAN variant.
+
+### Waifu2x models
+
+Classic anime upscaling models with extensive scale options.
+
+#### waifu2x-models-cunet
+
+- **Upscaler**: `waifu2x`  
+- **Scales**: 2x, 4x, 8x, 16x, 32x  
+- **Noise levels**: 0, 1, 2, 3  
+- **Latency**: 5.2s (Medium)  
+- **Source**: [Moebytes/waifu2x](https://github.com/Moebytes/waifu2x/tree/eaadd13cf54ba3bcb3cbd3e4a1cb2cd922420c9b/waifu2x/models-cunet)
+
+CUnet architecture with extensive scale support and noise reduction options.
+
+#### waifu2x-models-upconv
+
+- **Upscaler**: `waifu2x`  
+- **Scales**: 2x, 4x, 8x, 16x, 32x  
+- **Noise levels**: 0, 1, 2, 3  
+- **Latency**: 2.61s (Fast)  
+- **Source**: [Moebytes/waifu2x](https://github.com/Moebytes/waifu2x/tree/eaadd13cf54ba3bcb3cbd3e4a1cb2cd922420c9b/waifu2x/models-upconv_7_anime_style_art_rgb)
+
+UpConv architecture optimized for anime-style art.
+
+### Specialized upscaling models
+
+#### 4x-WTP-ColorDS
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.53s (Slow)  
+- **Source**: [OpenModelDB](https://openmodeldb.info/models/4x-WTP-ColorDS)
+
+ColorDS model for preserving color accuracy.
+
+#### remacri-4x
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.84s (Slow)  
+- **Source**: [upscayl/upscayl](https://github.com/upscayl/upscayl/tree/d6e9a36b894d302e6268dc239e8a51ff29c49ded/resources/models)
+
+Remacri model for high-quality upscaling.
+
+#### ultramix-balanced-4x
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 10.0s (Slow)  
+- **Source**: [upscayl/upscayl](https://github.com/upscayl/upscayl/tree/d6e9a36b894d302e6268dc239e8a51ff29c49ded/resources/models)
+
+Balanced quality/detail model.
+
+#### ultrasharp-4x
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.73s (Slow)  
+- **Source**: [upscayl/upscayl](https://github.com/upscayl/upscayl/tree/d6e9a36b894d302e6268dc239e8a51ff29c49ded/resources/models)
+
+Focuses on edge sharpness.
+
+#### 4xInt-RemAnime
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.46s (Slow)  
+- **Source**: [Phhofm/models](https://github.com/Phhofm/models)
+
+Anime-focused interpolation model.
+
+#### AI-Forever_x4plus
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.55s (Slow)  
+- **Source**: [Hugging Face](https://huggingface.co/leonelhs/realesrgan)
+
+AI-Forever enhanced variant.
+
+### Photo and web content models
+
+#### 4xNomosWebPhoto_esrgan
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.77s (Slow)  
+- **Source**: [OpenModelDB](https://openmodeldb.info/models/4x-NomosWebPhoto-esrgan)
+
+Optimized for web photos and realistic content.
+
+#### 4xHFA2k
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.69s (Slow)  
+- **Source**: [upscayl/custom-models](https://github.com/upscayl/custom-models/tree/4b6d2cfa59c7442af115dfc6e50fd8d7d40b96ef/models)
+
+High-fidelity artwork upscaling.
+
+### LSDIR models
+
+Large-scale dataset image restoration models.
+
+#### 4xLSDIRCompactC3
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 1.31s (Very Fast)  
+- **Source**: [upscayl/custom-models](https://github.com/upscayl/custom-models/tree/4b6d2cfa59c7442af115dfc6e50fd8d7d40b96ef/models)
+
+Compact, fast variant of LSDIR.
+
+#### 4xLSDIRplusC
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.51s (Slow)  
+- **Source**: [upscayl/custom-models](https://github.com/upscayl/custom-models/tree/4b6d2cfa59c7442af115dfc6e50fd8d7d40b96ef/models)
+
+Enhanced LSDIR with improved quality.
+
+### Additional models
+
+#### 4x_NMKD-Siax_200k
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.67s (Slow)  
+- **Source**: [upscayl/custom-models](https://github.com/upscayl/custom-models/tree/4b6d2cfa59c7442af115dfc6e50fd8d7d40b96ef/models)
+
+NMKD's Siax model trained on 200k iterations.
+
+#### 4xNomos8kSC
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.58s (Slow)  
+- **Source**: [upscayl/custom-models](https://github.com/upscayl/custom-models/tree/4b6d2cfa59c7442af115dfc6e50fd8d7d40b96ef/models)
+
+Nomos 8k super-compact model.
+
+#### uniscale_restore_x4
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.51s (Slow)  
+- **Source**: [upscayl/custom-models](https://github.com/upscayl/custom-models/tree/4b6d2cfa59c7442af115dfc6e50fd8d7d40b96ef/models)
+
+Universal scaling with restoration focus.
+
+#### unknown-2.0.1
+
+- **Upscaler**: `upscayl`  
+- **Scales**: 2x, 3x, 4x  
+- **Latency**: 9.87s (Slow)  
+- **Source**: [upscayl/custom-models](https://github.com/upscayl/custom-models/tree/4b6d2cfa59c7442af115dfc6e50fd8d7d40b96ef/models)
+
+Community model with unknown origin.
+
+## Using upscale models
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+// Basic upscaling
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'realcugan', scale: 4, noise: 0 }
+]);
+
+// Upscaling with noise reduction
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'waifu2x-models-cunet', scale: 2, noise: 2 }
+]);
+
+// Fast upscaling
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'realesr-animevideov3', scale: 4 }
+]);
+```
+
+<Tip>
+For batch processing, consider using [daemon mode](/guides/daemon-mode) to improve performance by loading models once.
+</Tip>
+
+## Choosing the right model
+
+**For speed**: Use `realesr-animevideov3`, `RealESRGAN_General_x4_v3`, or `4xLSDIRCompactC3`
+
+**For anime/manga**: Use `realesrgan-x4plus-anime`, `realcugan`, or `waifu2x-models-cunet`
+
+**For photos**: Use `4xNomosWebPhoto_esrgan` or `realesrgan-x4plus`
+
+**For extreme scales**: Use `waifu2x-models-cunet` or `waifu2x-models-upconv` (up to 32x)
+
+**For quality**: Use `realesrgan-x4plus`, `ultramix-balanced-4x`, or `ultrasharp-4x`
+
+## Related pages
+
+- [Performance comparison](/models/performance) - Compare model speeds
+- [Descreen models](/models/descreen) - Remove halftone patterns
+- [Pipeline API](/api/pipeline) - Combine multiple models

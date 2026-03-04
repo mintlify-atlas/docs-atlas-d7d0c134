@@ -1,0 +1,271 @@
+---
+title: Model performance
+description: Performance comparison and optimization for OpenComic AI models
+---
+
+Model performance varies significantly across the library. Understanding latency characteristics helps you choose the right balance between speed and quality for your use case.
+
+## Performance categories
+
+Models are categorized by processing speed:
+
+<CardGroup cols={2}>
+  <Card title="Very Fast" icon="bolt" color="#10b981">
+    Latency ≤ 1.0s - Best for real-time processing and batch workflows
+  </Card>
+  <Card title="Fast" icon="gauge-simple-high" color="#3b82f6">
+    Latency 1.0s - 3.0s - Good balance of speed and quality
+  </Card>
+  <Card title="Medium" icon="gauge" color="#f59e0b">
+    Latency 3.0s - 5.0s - Higher quality with moderate wait
+  </Card>
+  <Card title="Slow" icon="hourglass" color="#ef4444">
+    Latency > 5.0s - Maximum quality, longer processing time
+  </Card>
+</CardGroup>
+
+## Upscale model performance
+
+### Very fast models (≤ 1.0s)
+
+| Model | Latency | Scales |
+|-------|---------|--------|
+| `4xLSDIRCompactC3` | 1.31s | 2x, 3x, 4x |
+| `RealESRGAN_General_x4_v3` | 1.35s | 2x, 3x, 4x |
+| `realesr-animevideov3` | 1.36s | 2x, 3x, 4x |
+| `RealESRGAN_General_WDN_x4_v3` | 1.6s | 2x, 3x, 4x |
+
+These models are excellent for batch processing and real-time applications.
+
+### Fast models (1.0s - 3.0s)
+
+| Model | Latency | Scales |
+|-------|---------|--------|
+| `waifu2x-models-upconv` | 2.61s | 2x, 4x, 8x, 16x, 32x |
+| `realcugan` | 2.96s | 2x, 3x, 4x |
+
+Good all-around performers with quality output.
+
+### Medium models (3.0s - 5.0s)
+
+| Model | Latency | Scales |
+|-------|---------|--------|
+| `realesrgan-x4plus-anime` | 3.61s | 2x, 3x, 4x |
+| `waifu2x-models-cunet` | 5.2s | 2x, 4x, 8x, 16x, 32x |
+
+Balanced quality and performance for anime content.
+
+### Slow models (> 5.0s)
+
+| Model | Latency | Scales |
+|-------|---------|--------|
+| `realesrnet-x4plus` | 9.35s | 2x, 3x, 4x |
+| `realesrgan-x4plus` | 9.44s | 2x, 3x, 4x |
+| `4xInt-RemAnime` | 9.46s | 2x, 3x, 4x |
+| `uniscale_restore_x4` | 9.51s | 2x, 3x, 4x |
+| `4xLSDIRplusC` | 9.51s | 2x, 3x, 4x |
+| `4x-WTP-ColorDS` | 9.53s | 2x, 3x, 4x |
+| `AI-Forever_x4plus` | 9.55s | 2x, 3x, 4x |
+| `4xNomos8kSC` | 9.58s | 2x, 3x, 4x |
+| `4x_NMKD-Siax_200k` | 9.67s | 2x, 3x, 4x |
+| `4xHFA2k` | 9.69s | 2x, 3x, 4x |
+| `ultrasharp-4x` | 9.73s | 2x, 3x, 4x |
+| `4xNomosWebPhoto_esrgan` | 9.77s | 2x, 3x, 4x |
+| `remacri-4x` | 9.84s | 2x, 3x, 4x |
+| `unknown-2.0.1` | 9.87s | 2x, 3x, 4x |
+| `ultramix-balanced-4x` | 10.0s | 2x, 3x, 4x |
+
+Maximum quality models for professional workflows.
+
+## Descreen model performance
+
+| Model | Latency | Speed Category |
+|-------|---------|----------------|
+| `1x_wtp_descreenton_compact` | 0.51s | Very Fast |
+| `opencomic-ai-descreen-hard-compact` | 0.52s | Very Fast |
+| `opencomic-ai-descreen-hard-lite` | 3.0s | Fast |
+| `1x_halftone_patch_060000_G` | 8.26s | Slow |
+
+## Artifact removal model performance
+
+| Model | Latency | Speed Category |
+|-------|---------|----------------|
+| `opencomic-ai-artifact-removal-compact` | 0.5s | Very Fast |
+| `opencomic-ai-artifact-removal-lite` | 2.97s | Fast |
+| `1x_NMKD-Jaywreck3-Lite_320k` | 2.98s | Fast |
+| `1x_NMKD-Jaywreck3-Soft-Lite_320k` | 2.98s | Fast |
+| `1x-SaiyaJin-DeJpeg` | 8.2s | Slow |
+| `opencomic-ai-artifact-removal` | 8.21s | Slow |
+| `1x_JPEGDestroyerV2_96000G` | 8.22s | Slow |
+
+## Daemon mode performance
+
+Daemon mode significantly improves performance for batch processing by loading models once and keeping them in memory. This is only available for `upscayl` models.
+
+### Performance improvements
+
+| Model | Without Daemon | With Daemon | Speedup |
+|-------|----------------|-------------|----------|
+| OpenComic AI Upscale Lite | 52.087s | 7.646s | **6.81x faster** |
+| RealESRGAN x4 Plus | 73.273s | 23.199s | **3.16x faster** |
+
+<Note>
+These benchmarks are for processing 10 images at 512x512px. Performance improvement scales with batch size.
+</Note>
+
+### How daemon mode works
+
+1. **Model preloading**: Model is loaded into memory once
+2. **Persistent process**: Daemon stays alive between images
+3. **Fast processing**: No model loading overhead per image
+4. **Automatic cleanup**: Daemons close after idle timeout
+
+### Enabling daemon mode
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+// Enable up to 3 concurrent daemons (default)
+OpenComicAI.setConcurrentDaemons(3);
+
+// Set idle timeout (default 60 seconds)
+OpenComicAI.setDaemonIdleTimeout(60000);
+
+// Process multiple images
+for (const image of images) {
+  await OpenComicAI.pipeline(image.input, image.output, [
+    { model: 'realesrgan-x4plus', scale: 4 }
+  ]);
+}
+
+// Manually close daemons when done
+OpenComicAI.closeAllDaemons();
+```
+
+### Daemon performance details
+
+#### Without daemon mode
+
+Each image requires full model loading:
+
+```bash
+Processing image 1/10: 6.473s  (includes model loading)
+Processing image 2/10: 7.809s  (includes model loading)
+Processing image 3/10: 7.690s  (includes model loading)
+...
+Total: 73.273s
+```
+
+#### With daemon mode enabled
+
+Model loads once, then processes images quickly:
+
+```bash
+Preload model: 1.165s          (one-time cost)
+Processing image 1/10: 2.217s  (inference only)
+Processing image 2/10: 2.196s  (inference only)
+Processing image 3/10: 2.203s  (inference only)
+...
+Total: 23.199s
+```
+
+### When to use daemon mode
+
+**Use daemon mode for**:
+- Batch processing multiple images
+- Processing image sequences
+- Server applications
+- Automated workflows
+
+**Don't use daemon mode for**:
+- Single image processing
+- Memory-constrained environments
+- Different models for each image
+
+## Optimization strategies
+
+### For speed
+
+1. **Choose fast models**: Use Very Fast or Fast category models
+2. **Enable daemon mode**: 3-7x speedup for batch processing
+3. **Use compact models**: OpenComic AI Compact variants are optimized for speed
+4. **Pipeline efficiently**: Combine models to avoid multiple read/write cycles
+
+```typescript
+// Efficient: Single pipeline
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'opencomic-ai-descreen-hard-compact' },
+  { model: 'opencomic-ai-artifact-removal-compact' },
+  { model: 'realesr-animevideov3', scale: 4 }
+]);
+```
+
+### For quality
+
+1. **Choose quality models**: Accept slower processing for better results
+2. **Use full-size models**: Non-compact variants provide better quality
+3. **Multi-pass processing**: Apply models multiple times for difficult images
+4. **Combine complementary models**: Use specialized models for each task
+
+```typescript
+// Quality-focused pipeline
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: '1x_halftone_patch_060000_G' },
+  { model: 'opencomic-ai-artifact-removal' },
+  { model: 'realesrgan-x4plus', scale: 4 }
+]);
+```
+
+### For balanced workflows
+
+1. **Mix fast and quality models**: Use fast models for preprocessing
+2. **Scale appropriately**: Lower scales process faster
+3. **Test different models**: Find the sweet spot for your content
+
+```typescript
+// Balanced pipeline
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'opencomic-ai-descreen-hard-compact' },  // Fast
+  { model: 'opencomic-ai-artifact-removal-lite' },  // Medium
+  { model: 'realcugan', scale: 4, noise: 0 }       // Fast
+]);
+```
+
+## Hardware considerations
+
+Performance depends on:
+
+- **GPU**: Models run faster with GPU acceleration
+- **CPU**: Multi-core CPUs improve parallel processing
+- **RAM**: Daemon mode requires sufficient memory for loaded models
+- **Storage**: Fast SSD improves file I/O between pipeline stages
+
+<Tip>
+For maximum performance, enable daemon mode, use GPU acceleration, and choose models from the Very Fast or Fast categories.
+</Tip>
+
+## Benchmarking your system
+
+Test different models on your hardware to find optimal choices:
+
+```typescript
+const models = [
+  'realesr-animevideov3',
+  'realcugan',
+  'realesrgan-x4plus-anime'
+];
+
+for (const model of models) {
+  const start = Date.now();
+  await OpenComicAI.pipeline('./test.jpg', './output.jpg', [
+    { model, scale: 4 }
+  ]);
+  console.log(`${model}: ${(Date.now() - start) / 1000}s`);
+}
+```
+
+## Related pages
+
+- [Upscale models](/models/upscale) - All upscaling models
+- [Performance optimization](/guides/daemon-mode) - Optimization techniques
+- [Daemon configuration](/api/set-concurrent-daemons) - Configure daemon mode

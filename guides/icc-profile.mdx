@@ -1,0 +1,273 @@
+---
+title: ICC profile preservation
+description: Maintain color accuracy by preserving ICC profiles during image processing
+---
+
+## Overview
+
+ICC (International Color Consortium) profiles define how colors in an image should be interpreted and displayed. When processing images through AI models, the ICC profile is typically lost, potentially changing the image's color appearance.
+
+OpenComic AI Bin can preserve ICC profiles from your source images by integrating with the Sharp image processing library.
+
+## Why ICC profiles matter
+
+ICC profiles ensure color consistency across different devices and applications:
+
+- **Without ICC profile**: Colors may appear different in various viewers and browsers
+- **With ICC profile**: Colors display consistently according to the embedded color space
+
+This is especially important for:
+
+- Professional photography workflows
+- Print production
+- Maintaining color accuracy from scanned materials
+- Wide-gamut color spaces (Adobe RGB, ProPhoto RGB, etc.)
+
+## Sharp integration
+
+To enable ICC profile preservation, pass a Sharp instance to OpenComic AI:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+import sharp from 'sharp';
+
+// Enable ICC profile preservation
+OpenComicAI.keepIccProfile(sharp);
+```
+
+<Note>
+You must install Sharp separately: `npm install sharp`
+</Note>
+
+Once enabled, all images processed through `pipeline` will preserve their ICC profiles.
+
+## Complete example
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+import sharp from 'sharp';
+
+(async () => {
+  OpenComicAI.setModelsPath('./models');
+  
+  // Enable ICC profile preservation with default settings
+  OpenComicAI.keepIccProfile(sharp);
+
+  await OpenComicAI.pipeline(
+    './input.jpg',  // Has ICC profile embedded
+    './output.jpg', // Will have the same ICC profile
+    [
+      {
+        model: 'realcugan',
+        scale: 4,
+      }
+    ]
+  );
+
+  console.log('Processing complete with ICC profile preserved!');
+})();
+```
+
+## pipelineColourspace configuration
+
+The `pipelineColourspace` parameter controls how Sharp processes colors internally:
+
+```typescript
+// Default: rgb16 (recommended for most use cases)
+OpenComicAI.keepIccProfile(sharp, 'rgb16');
+
+// Alternative: rgb (8-bit processing, faster but less accurate)
+OpenComicAI.keepIccProfile(sharp, 'rgb');
+```
+
+### Available colourspaces
+
+- `'rgb16'` (default) - 16-bit RGB, higher precision, better color accuracy
+- `'rgb'` - 8-bit RGB, faster but may introduce banding in gradients
+
+For most use cases, the default `'rgb16'` provides the best balance of quality and performance.
+
+<Tip>
+Use `'rgb16'` when working with high-quality sources or wide-gamut color spaces to avoid color banding and precision loss.
+</Tip>
+
+## How it works
+
+When ICC profile preservation is enabled:
+
+1. Before processing, the ICC profile is extracted from the source image
+2. The image is processed through the AI model(s)
+3. After processing, the original ICC profile is embedded in the output image
+4. Sharp applies the profile transformation with the specified `pipelineColourspace`
+
+Here's the relevant code from `index.mts:1027-1074`:
+
+```typescript
+if (OpenComicAI.sharp) {
+  // Read metadata (including ICC profile) from source image
+  const srcMetadata = await OpenComicAI.sharp(_source).metadata();
+
+  if (srcMetadata.icc) {
+    // Save ICC profile to temporary file
+    const iccPath = path.join(path.dirname(dest), `${crypto.randomUUID()}.icc`);
+    await fs.writeFile(iccPath, srcMetadata.icc);
+
+    // Apply ICC profile to output image
+    let sharp = await OpenComicAI.sharp(dest)
+      .pipelineColourspace(OpenComicAI.pipelineColourspace)
+      .withIccProfile(iccPath);
+
+    // Re-encode with maximum quality
+    await sharp.toFile(iccImagePath);
+
+    // Replace output with ICC-profiled version
+    await fs.unlink(dest);
+    fs.renameSync(iccImagePath, dest);
+    await fs.unlink(iccPath);
+  }
+}
+```
+
+## Output format considerations
+
+ICC profiles are embedded differently depending on output format:
+
+### JPEG
+
+```typescript
+await OpenComicAI.pipeline(
+  './input.jpg',
+  './output.jpg', // ICC profile embedded in JPEG
+  steps
+);
+```
+
+JPEG output is re-encoded at quality 100 to prevent additional compression artifacts.
+
+### PNG
+
+```typescript
+await OpenComicAI.pipeline(
+  './input.png',
+  './output.png', // ICC profile embedded in PNG
+  steps
+);
+```
+
+PNG output uses compression level 0 for fastest processing (the ICC profile itself is still preserved).
+
+### WebP
+
+```typescript
+await OpenComicAI.pipeline(
+  './input.webp',
+  './output.webp', // ICC profile embedded in WebP
+  steps
+);
+```
+
+WebP output is re-encoded at quality 100.
+
+<Note>
+The output format is determined by the file extension of the destination path, not the source image.
+</Note>
+
+## When to use ICC profile preservation
+
+Enable ICC profile preservation when:
+
+- Processing professionally photographed images
+- Working with scanned artwork that has been color-corrected
+- Preparing images for print production
+- Maintaining color accuracy across different display devices
+- Working with wide-gamut color spaces (Adobe RGB, ProPhoto RGB)
+
+You can skip ICC profile preservation when:
+
+- Processing standard sRGB images for web use
+- Working with images that don't have embedded profiles
+- Performance is critical and color precision is less important
+- Source images are already in the target color space
+
+## Checking for ICC profiles
+
+You can check if an image has an ICC profile using Sharp:
+
+```typescript
+import sharp from 'sharp';
+
+const metadata = await sharp('./image.jpg').metadata();
+
+if (metadata.icc) {
+  console.log('Image has an ICC profile');
+  console.log('Color space:', metadata.space); // e.g., 'srgb', 'rgb', 'cmyk'
+} else {
+  console.log('Image does not have an ICC profile');
+}
+```
+
+## Performance impact
+
+ICC profile preservation adds minimal overhead:
+
+1. Extracting the ICC profile: ~10-50ms
+2. Re-encoding with the profile: ~100-500ms (depending on image size)
+
+For most workflows, this overhead is negligible compared to the AI processing time.
+
+## Example: Batch processing with ICC profiles
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+import sharp from 'sharp';
+import { readdir } from 'fs/promises';
+import path from 'path';
+
+async function processWithProfiles() {
+  OpenComicAI.setModelsPath('./models');
+  OpenComicAI.keepIccProfile(sharp, 'rgb16');
+
+  const inputDir = './input';
+  const outputDir = './output';
+  const files = await readdir(inputDir);
+
+  for (const file of files) {
+    const input = path.join(inputDir, file);
+    const output = path.join(outputDir, file);
+
+    // Check if image has ICC profile
+    const metadata = await sharp(input).metadata();
+    if (metadata.icc) {
+      console.log(`${file} has ICC profile - preserving...`);
+    } else {
+      console.log(`${file} has no ICC profile`);
+    }
+
+    await OpenComicAI.pipeline(
+      input,
+      output,
+      [{ model: 'realcugan', scale: 4 }]
+    );
+  }
+}
+
+processWithProfiles();
+```
+
+## Disabling ICC profile preservation
+
+If you need to disable ICC profile preservation after enabling it:
+
+```typescript
+// Disable by setting sharp to false
+OpenComicAI.sharp = false;
+OpenComicAI.pipelineColourspace = false;
+```
+
+Or simply don't call `keepIccProfile()` at all.
+
+## Next steps
+
+- Learn about [basic usage](/guides/basic-usage) for fundamental concepts
+- Explore [pipeline processing](/guides/pipeline-processing) to chain multiple operations
+- Review [model selection](/guides/model-selection) to choose the right models

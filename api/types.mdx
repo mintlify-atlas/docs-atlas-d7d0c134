@@ -1,0 +1,267 @@
+---
+title: Types
+description: TypeScript type definitions and interfaces
+---
+
+## Type exports
+
+OpenComic AI Bin exports several TypeScript types and interfaces for type-safe usage.
+
+## Model
+
+```typescript
+type Model = keyof typeof models.upscale & 
+  keyof typeof models.descreen & 
+  keyof typeof models['artifact-removal'] & 
+  keyof typeof scalesModels
+```
+
+String literal type representing all available model keys.
+
+### Example values
+
+- `'realcugan'`
+- `'realesr-animevideov3'`
+- `'waifu2x-models-cunet'`
+- `'opencomic-ai-descreen-hard-compact'`
+
+## ModelType
+
+```typescript
+type ModelType = 'upscale' | 'descreen' | 'artifact-removal'
+```
+
+The three categories of AI models available.
+
+## Upscaler
+
+```typescript
+type Upscaler = 'realcugan' | 'waifu2x' | 'upscayl'
+```
+
+The underlying upscaling engines used by models.
+
+## Speed
+
+```typescript
+type Speed = 'Very Fast' | 'Fast' | 'Medium' | 'Slow' | 'Very Slow'
+```
+
+Model processing speed classification based on latency.
+
+## Formats
+
+```typescript
+type Formats =
+  | 'bmp'
+  | 'dib'
+  | 'exr'
+  | 'hdr'
+  | 'jpe'
+  | 'jpeg'
+  | 'jpg'
+  | 'pbm'
+  | 'pgm'
+  | 'pic'
+  | 'png'
+  | 'pnm'
+  | 'ppm'
+  | 'pxm'
+  | 'ras'
+  | 'sr'
+  | 'tif'
+  | 'tiff'
+  | 'webp'
+```
+
+Supported image file formats for input and output.
+
+## OpenComicAIOptions
+
+```typescript
+interface OpenComicAIOptions {
+  model?: Model;
+  noise?: 0 | 1 | 2 | 3;
+  scale?: number;
+  tileSize?: number;
+  gpuId?: string;
+  threads?: number;
+  tta?: boolean;
+}
+```
+
+Configuration options for image processing.
+
+### Properties
+
+- `model` - The AI model to use (defaults to `'realcugan'`)
+- `noise` - Noise reduction level (0-3, only for models that support it)
+- `scale` - Output scale multiplier
+- `tileSize` - Size of processing tiles (for memory management)
+- `gpuId` - GPU device ID to use
+- `threads` - Number of CPU threads
+- `tta` - Enable test-time augmentation for better quality
+
+### Example usage
+
+```typescript
+const options: OpenComicAIOptions = {
+  model: 'realcugan',
+  noise: 3,
+  scale: 2,
+  tileSize: 400,
+  threads: 4,
+  tta: false
+};
+```
+
+## Downloading
+
+```typescript
+interface Downloading {
+  start?: () => void;
+  progress?: (progress: number) => void;
+  end?: () => void;
+}
+```
+
+Callbacks for monitoring model file downloads.
+
+### Properties
+
+- `start` - Called when download begins
+- `progress` - Called with progress value (0-1)
+- `end` - Called when download completes
+
+### Example usage
+
+```typescript
+const downloading: Downloading = {
+  start: () => console.log('Downloading models...'),
+  progress: (p) => console.log(`Progress: ${(p * 100).toFixed(1)}%`),
+  end: () => console.log('Download complete')
+};
+
+await OpenComicAI.pipeline(source, dest, steps, false, downloading);
+```
+
+## ModelObject
+
+```typescript
+interface ModelObject {
+  key?: Model;
+  name: string;
+  upscaler: Upscaler;
+  type?: ModelType;
+  scales: number[];
+  noise: number[] | undefined;
+  latency: number;
+  speed?: Speed;
+  folder: string;
+  path?: string;
+  files: string[];
+  scaleFiles?: Record<number, Model>;
+  supportCurrentPlatform?: boolean;
+}
+```
+
+Complete information about an AI model.
+
+### Properties
+
+- `key` - Model identifier
+- `name` - Human-readable model name
+- `upscaler` - Underlying engine used
+- `type` - Model category
+- `scales` - Supported scale factors
+- `noise` - Supported noise reduction levels (undefined if not supported)
+- `latency` - Processing speed benchmark
+- `speed` - Speed classification
+- `folder` - Relative path to model files
+- `path` - Absolute path to model files (set at runtime)
+- `files` - List of required model files
+- `scaleFiles` - Mapping of scales to model variants
+- `supportCurrentPlatform` - Whether model works on current OS/architecture
+
+### Example usage
+
+```typescript
+const model: ModelObject = OpenComicAI.model('realcugan');
+
+console.log(model.name); // "RealCUGAN"
+console.log(model.scales); // [2, 3, 4]
+console.log(model.noise); // [0, 3]
+console.log(model.speed); // "Fast"
+console.log(model.supportCurrentPlatform); // true
+```
+
+## UpscalerObject
+
+```typescript
+interface UpscalerObject {
+  name: string;
+  binary: string;
+  platforms: Partial<Record<NodeJS.Platform, Partial<Record<NodeJS.Architecture, string>>>>;
+}
+```
+
+Information about an upscaling engine binary.
+
+### Properties
+
+- `name` - Human-readable upscaler name
+- `binary` - Binary executable name
+- `platforms` - Platform-specific binary paths (OS -> architecture -> path)
+
+### Example usage
+
+```typescript
+// Internal structure (not directly exposed)
+const upscalerInfo: UpscalerObject = {
+  name: 'RealCUGAN NCNN Vulkan',
+  binary: 'realcugan-ncnn-vulkan',
+  platforms: {
+    darwin: {
+      x64: 'mac/x64/realcugan/realcugan-ncnn-vulkan.app',
+      arm64: 'mac/arm64/realcugan/realcugan-ncnn-vulkan.app'
+    },
+    win32: {
+      x64: 'win/x64/realcugan/realcugan-ncnn-vulkan.exe'
+    },
+    linux: {
+      x64: 'linux/x64/realcugan/realcugan-ncnn-vulkan',
+      arm64: 'linux/arm64/realcugan/realcugan-ncnn-vulkan'
+    }
+  }
+};
+```
+
+## Importing types
+
+```typescript
+import type {
+  Model,
+  ModelType,
+  ModelObject,
+  Upscaler,
+  Speed,
+  Formats,
+  OpenComicAIOptions,
+  Downloading,
+  UpscalerObject
+} from '@opencomic/ai-bin';
+```
+
+## Type guards
+
+```typescript
+// Check if a string is a valid model
+function isValidModel(value: string): value is Model {
+  return OpenComicAI.modelsList.includes(value as Model);
+}
+
+// Check if a string is a valid model type
+function isValidModelType(value: string): value is ModelType {
+  return ['upscale', 'descreen', 'artifact-removal'].includes(value);
+}
+```

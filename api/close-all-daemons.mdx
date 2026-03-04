@@ -1,0 +1,111 @@
+---
+title: closeAllDaemons()
+description: Manually close all running daemon processes
+---
+
+Immediately closes all active daemon processes and clears the daemon pool. This is useful for manual cleanup or when shutting down your application.
+
+## Syntax
+
+```typescript
+OpenComicAI.closeAllDaemons(): void
+```
+
+## Parameters
+
+This method takes no parameters.
+
+## Returns
+
+`void` - This method does not return a value.
+
+## Behavior
+
+- Closes all active daemon processes immediately
+- Clears the internal daemon pool completely
+- Does not wait for ongoing operations to complete
+- Frees all memory used by daemon processes
+- Safe to call even if no daemons are running
+
+## Example
+
+```typescript
+import OpenComicAI from '@opencomic/ai-bin';
+
+// Process multiple images with daemon mode
+for (const image of images) {
+  await OpenComicAI.upscale({
+    input: image,
+    output: `upscaled-${image}`,
+    daemonMode: true
+  });
+}
+
+// Clean up all daemons when done
+OpenComicAI.closeAllDaemons();
+```
+
+## Use cases
+
+### Application shutdown
+
+```typescript
+process.on('SIGINT', () => {
+  console.log('Shutting down...');
+  OpenComicAI.closeAllDaemons();
+  process.exit(0);
+});
+```
+
+### After batch processing
+
+```typescript
+async function processBatch(images) {
+  try {
+    for (const image of images) {
+      await OpenComicAI.upscale({
+        input: image,
+        output: `upscaled-${image}`,
+        daemonMode: true
+      });
+    }
+  } finally {
+    // Ensure cleanup even if errors occur
+    OpenComicAI.closeAllDaemons();
+  }
+}
+```
+
+### Memory management
+
+```typescript
+// Process large batches with periodic cleanup
+for (let i = 0; i < largeImageArray.length; i++) {
+  await OpenComicAI.upscale({
+    input: largeImageArray[i],
+    output: `upscaled-${i}.jpg`,
+    daemonMode: true
+  });
+  
+  // Close daemons every 100 images to manage memory
+  if (i % 100 === 0) {
+    OpenComicAI.closeAllDaemons();
+  }
+}
+```
+
+## Important notes
+
+- Does not interrupt currently processing images
+- Daemons will be recreated automatically on next upscale operation
+- Use this for explicit cleanup; daemons also close automatically based on idle timeout
+
+## Related
+
+- [setConcurrentDaemons()](/api/set-concurrent-daemons) - Control concurrent daemon count
+- [setDaemonIdleTimeout()](/api/set-daemon-idle-timeout) - Configure automatic cleanup
+- [Daemon mode guide](/guides/daemon-mode) - Learn about daemon mode
+
+## Source
+
+Defined in index.mts:787-797

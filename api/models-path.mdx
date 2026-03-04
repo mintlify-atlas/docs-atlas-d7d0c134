@@ -1,0 +1,108 @@
+---
+title: modelsPath
+description: Current path where AI models are stored
+---
+
+## Overview
+
+The `OpenComicAI.modelsPath` static property stores the absolute path to the directory where AI model files are located.
+
+## Type
+
+```typescript
+static modelsPath: string | undefined
+```
+
+## Default value
+
+`undefined` - Must be set before using the library
+
+## Setting the models path
+
+The models path must be configured using `setModelsPath()` before performing any image processing:
+
+```javascript
+import OpenComicAI from '@opencomic/ai-bin';
+
+// Set the models path
+OpenComicAI.setModelsPath('./models');
+
+// Now modelsPath is set
+console.log(OpenComicAI.modelsPath); // Absolute path to ./models
+```
+
+## Example usage
+
+```javascript
+import OpenComicAI from '@opencomic/ai-bin';
+import path from 'path';
+
+// Set models path relative to current directory
+OpenComicAI.setModelsPath('./my-models');
+
+// Or use an absolute path
+OpenComicAI.setModelsPath('/usr/local/share/opencomic-ai/models');
+
+// Or use path.join for cross-platform compatibility
+const modelsDir = path.join(process.cwd(), 'models');
+OpenComicAI.setModelsPath(modelsDir);
+
+// Check if models path is set
+if (!OpenComicAI.modelsPath) {
+  throw new Error('Models path not configured');
+}
+```
+
+## Directory structure
+
+The models path should contain subdirectories for each model type:
+
+```
+models/
+├── upscale/
+│   ├── realcugan/
+│   │   └── models-se/
+│   └── models/
+├── descreen/
+│   └── models/
+└── artifact-removal/
+    └── models/
+```
+
+## Error handling
+
+```javascript
+try {
+  OpenComicAI.setModelsPath('./nonexistent');
+} catch (error) {
+  console.error('Models path does not exist:', error.message);
+}
+
+// Check before processing
+if (!OpenComicAI.modelsPath) {
+  console.error('Please set models path before processing images');
+  process.exit(1);
+}
+```
+
+## Runtime checking
+
+```javascript
+// The library will throw an error if modelsPath is not set
+try {
+  await OpenComicAI.pipeline(source, dest, steps);
+} catch (error) {
+  if (error.message.includes('Models path is not set')) {
+    console.error('Configure models path using OpenComicAI.setModelsPath()');
+  }
+}
+```
+
+## Related methods
+
+- [setModelsPath()](/api/set-models-path) - Configure the models directory
+
+## See also
+
+- [Getting started guide](/quickstart)
+- [Configuration](/quickstart)

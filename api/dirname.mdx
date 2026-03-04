@@ -1,0 +1,116 @@
+---
+title: __dirname
+description: Base directory for binary executable paths
+---
+
+## Overview
+
+The `OpenComicAI.__dirname` static property stores the base directory used to resolve paths to binary executables.
+
+## Type
+
+```typescript
+static __dirname: string
+```
+
+## Default value
+
+Automatically set to the package's installation directory. Uses `__dirname` in CommonJS environments or `import.meta.dirname` in ES modules.
+
+## Purpose
+
+This property is used internally to locate platform-specific binary executables (realcugan, waifu2x, upscayl) included with the package.
+
+## Setting custom dirname
+
+You can override the default directory using `setDirname()`:
+
+```javascript
+import OpenComicAI from '@opencomic/ai-bin';
+
+// Set custom dirname
+OpenComicAI.setDirname('/custom/path/to/binaries');
+
+console.log(OpenComicAI.__dirname); // '/custom/path/to/binaries'
+```
+
+## Example usage
+
+```javascript
+import OpenComicAI from '@opencomic/ai-bin';
+import path from 'path';
+
+// Get current dirname
+console.log(OpenComicAI.__dirname);
+// /Users/username/node_modules/@opencomic/ai-bin/dist
+
+// Set custom dirname for portable installation
+const appPath = process.env.PORTABLE_EXECUTABLE_DIR || __dirname;
+OpenComicAI.setDirname(appPath);
+
+// The binary paths are now resolved from the custom dirname
+const binary = OpenComicAI.binary('realcugan');
+console.log(binary);
+// /custom/path/to/binaries/../mac/arm64/realcugan/realcugan-ncnn-vulkan.app
+```
+
+## Use cases
+
+### Portable applications
+
+```javascript
+// For Electron apps with custom binary locations
+const { app } = require('electron');
+const resourcesPath = path.join(app.getAppPath(), 'resources');
+OpenComicAI.setDirname(resourcesPath);
+```
+
+### Development vs production
+
+```javascript
+if (process.env.NODE_ENV === 'development') {
+  // Use local build directory in development
+  OpenComicAI.setDirname('./build');
+} else {
+  // Use package directory in production (default)
+  // No need to set dirname
+}
+```
+
+### Custom binary distribution
+
+```javascript
+// If you're bundling binaries separately
+const binaryPath = process.env.OPENCOMIC_BINARY_PATH || 
+  path.join(process.cwd(), 'binaries');
+OpenComicAI.setDirname(binaryPath);
+```
+
+## How it's used internally
+
+The `__dirname` property is used by the `binary()` method to construct full paths to executables:
+
+```javascript
+// Internal usage example
+const binary = OpenComicAI.binary('realcugan');
+// Constructs: path.join(__dirname, '..', 'mac/arm64/realcugan/realcugan-ncnn-vulkan.app')
+```
+
+## Path resolution
+
+```javascript
+// setDirname converts relative paths to absolute paths
+OpenComicAI.setDirname('./binaries'); // Converts to absolute path
+
+// Absolute paths are used as-is
+OpenComicAI.setDirname('/usr/local/opencomic/binaries');
+```
+
+## Related methods
+
+- [setDirname()](/api/set-dirname) - Configure the base directory
+- [binary()](/api/binary) - Get path to a model's binary executable
+
+## See also
+
+- [Configuration](/quickstart)

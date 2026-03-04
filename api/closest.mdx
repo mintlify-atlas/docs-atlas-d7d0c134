@@ -1,0 +1,207 @@
+---
+title: closest
+description: Find closest value in array
+---
+
+## Signature
+
+```typescript
+OpenComicAI.closest(array: number[], target: number): number
+```
+
+## Description
+
+Finds and returns the value in an array that is numerically closest to a target value. This utility method is commonly used to find the nearest supported scale factor or noise level when the exact desired value is not available.
+
+For example, if a model supports scales `[2, 3, 4]` and you want to upscale by `3.5x`, this method will return `4` as the closest supported scale.
+
+## Parameters
+
+<ParamField path="array" type="number[]" required>
+  Array of numbers to search. Typically contains supported scale factors or noise levels from a model.
+</ParamField>
+
+<ParamField path="target" type="number" required>
+  The target value to find the closest match for.
+</ParamField>
+
+## Returns
+
+<ResponseField name="number" type="number">
+  The value from the array that is numerically closest to the target. If two values are equally close, returns the smaller value.
+</ResponseField>
+
+## Examples
+
+### Find closest supported scale
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const modelInfo = OpenComicAI.model('realcugan');
+const desiredScale = 3.5;
+
+// Find the closest supported scale
+const closestScale = OpenComicAI.closest(modelInfo.scales, desiredScale);
+
+console.log(`Closest scale to ${desiredScale}x: ${closestScale}x`);
+// Output: Closest scale to 3.5x: 4x
+```
+
+### Find closest noise level
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const modelInfo = OpenComicAI.model('waifu2x-models-cunet');
+
+if (modelInfo.noise) {
+  const desiredNoise = 1.5;
+  const closestNoise = OpenComicAI.closest(modelInfo.noise, desiredNoise);
+  
+  console.log(`Closest noise level to ${desiredNoise}: ${closestNoise}`);
+  // Output: Closest noise level to 1.5: 2
+}
+```
+
+### Validate and adjust scale
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+function getValidScale(model: string, desiredScale: number): number {
+  const modelInfo = OpenComicAI.model(model);
+  
+  // Check if exact scale is supported
+  if (modelInfo.scales.includes(desiredScale)) {
+    return desiredScale;
+  }
+  
+  // Find closest supported scale
+  const closestScale = OpenComicAI.closest(modelInfo.scales, desiredScale);
+  console.warn(
+    `Scale ${desiredScale}x not supported by ${model}. ` +
+    `Using ${closestScale}x instead.`
+  );
+  
+  return closestScale;
+}
+
+const scale = getValidScale('realcugan', 5);
+// Output: Scale 5x not supported by realcugan. Using 4x instead.
+// Returns: 4
+```
+
+### Find closest from custom array
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const availableSizes = [256, 512, 1024, 2048];
+const desiredSize = 800;
+
+const closestSize = OpenComicAI.closest(availableSizes, desiredSize);
+
+console.log(`Closest size to ${desiredSize}: ${closestSize}`);
+// Output: Closest size to 800: 1024
+```
+
+### Dynamic scale selection
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+async function upscaleToTargetSize(
+  inputPath: string,
+  outputPath: string,
+  targetWidth: number,
+  currentWidth: number,
+  model: string
+) {
+  // Calculate desired scale factor
+  const desiredScale = targetWidth / currentWidth;
+  
+  // Get model info and find closest supported scale
+  const modelInfo = OpenComicAI.model(model);
+  const scale = OpenComicAI.closest(modelInfo.scales, desiredScale);
+  
+  console.log(
+    `Target: ${desiredScale.toFixed(2)}x, Using: ${scale}x`
+  );
+  
+  // Process with adjusted scale
+  await OpenComicAI.pipeline(inputPath, outputPath, [
+    { model, scale }
+  ]);
+}
+
+await upscaleToTargetSize(
+  './input.jpg',
+  './output.jpg',
+  3200,  // target width
+  1000,  // current width
+  'realcugan'
+);
+// Output: Target: 3.20x, Using: 3x
+```
+
+### Handling edge cases
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const values = [2, 3, 4];
+
+// Exact match
+console.log(OpenComicAI.closest(values, 3));
+// Output: 3
+
+// Below minimum
+console.log(OpenComicAI.closest(values, 1));
+// Output: 2
+
+// Above maximum
+console.log(OpenComicAI.closest(values, 10));
+// Output: 4
+
+// Between two values (equidistant)
+console.log(OpenComicAI.closest(values, 2.5));
+// Output: 2 (returns the smaller value when equidistant)
+```
+
+### Build UI with valid options
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+function createScaleSlider(model: string) {
+  const modelInfo = OpenComicAI.model(model);
+  const minScale = Math.min(...modelInfo.scales);
+  const maxScale = Math.max(...modelInfo.scales);
+  
+  return {
+    min: minScale,
+    max: maxScale,
+    step: 0.1,
+    getValue: (sliderValue: number) => 
+      OpenComicAI.closest(modelInfo.scales, sliderValue),
+    supportedValues: modelInfo.scales,
+  };
+}
+
+const slider = createScaleSlider('realcugan');
+console.log(slider);
+// {
+//   min: 2,
+//   max: 4,
+//   step: 0.1,
+//   getValue: [Function],
+//   supportedValues: [2, 3, 4]
+// }
+```
+
+## Related
+
+- [model](/api/model) - Get model information with supported scales
+- [pipeline](/api/pipeline) - Process images with validated scales
+- [ModelObject](/api/types#modelobject) - Model information including scales and noise levels

@@ -1,0 +1,59 @@
+---
+title: setModelsPath()
+description: Configure a custom path for AI upscaling models
+---
+
+Sets a custom directory path where OpenComic AI models are stored. This is useful when you want to manage models in a different location than the default.
+
+## Syntax
+
+```typescript
+OpenComicAI.setModelsPath(path: string): void
+```
+
+## Parameters
+
+<ParamField path="path" type="string" required>
+  Absolute or relative path to the models directory. The path must exist or an error will be thrown.
+</ParamField>
+
+## Returns
+
+`void` - This method does not return a value.
+
+## Behavior
+
+- The path is resolved to an absolute path automatically
+- Validates that the directory exists before setting
+- Throws an error if the specified path does not exist
+
+## Example
+
+```typescript
+import OpenComicAI from '@opencomic/ai-bin';
+
+// Set custom models directory
+OpenComicAI.setModelsPath('./custom-models');
+
+// Or use an absolute path
+OpenComicAI.setModelsPath('/usr/local/opencomic/models');
+```
+
+## Error handling
+
+```typescript
+try {
+  OpenComicAI.setModelsPath('/path/to/models');
+} catch (error) {
+  console.error('Models path does not exist:', error.message);
+}
+```
+
+## Related
+
+- [setDirname()](/api/set-dirname) - Configure the package root directory
+- [Model selection](/guides/model-selection) - Learn about available models
+
+## Source
+
+Defined in index.mts:758-767

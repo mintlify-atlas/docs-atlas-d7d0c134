@@ -1,0 +1,75 @@
+---
+title: setConcurrentDaemons()
+description: Control the maximum number of concurrent daemon processes
+---
+
+Configures the maximum number of concurrent daemon processes that can run simultaneously in daemon mode. This helps manage system resources when processing multiple images.
+
+## Syntax
+
+```typescript
+OpenComicAI.setConcurrentDaemons(count?: number): void
+```
+
+## Parameters
+
+<ParamField path="count" type="number" default="3">
+  Maximum number of daemon processes to run concurrently. Must be a positive integer.
+</ParamField>
+
+## Returns
+
+`void` - This method does not return a value.
+
+## Behavior
+
+- Limits the number of upscaling processes running at the same time
+- When the limit is reached, older idle daemons are closed automatically
+- Higher values allow more parallel processing but consume more memory
+- Lower values reduce memory usage but may slow down batch processing
+
+## Example
+
+```typescript
+import OpenComicAI from '@opencomic/ai-bin';
+
+// Allow up to 5 concurrent daemons
+OpenComicAI.setConcurrentDaemons(5);
+
+// Process multiple images (up to 5 will run in parallel)
+const images = ['image1.jpg', 'image2.jpg', 'image3.jpg', /* ... */];
+
+for (const image of images) {
+  await OpenComicAI.upscale({
+    input: image,
+    output: `upscaled-${image}`,
+    daemonMode: true
+  });
+}
+```
+
+## Performance considerations
+
+### High concurrency (5-10 daemons)
+- Faster batch processing
+- Higher memory usage (1-2GB per daemon)
+- Best for systems with abundant RAM
+
+### Low concurrency (1-2 daemons)
+- Lower memory footprint
+- Sequential or limited parallel processing
+- Better for resource-constrained systems
+
+### Default (3 daemons)
+- Balanced approach
+- Good for most use cases
+
+## Related
+
+- [setDaemonIdleTimeout()](/api/set-daemon-idle-timeout) - Configure daemon timeout
+- [closeAllDaemons()](/api/close-all-daemons) - Manually close all daemons
+- [Daemon mode guide](/guides/daemon-mode) - Learn about daemon mode
+
+## Source
+
+Defined in index.mts:775-779

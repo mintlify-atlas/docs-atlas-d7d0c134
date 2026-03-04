@@ -1,0 +1,85 @@
+---
+title: Installation
+description: Install OpenComic AI Bin and set up the required dependencies for AI-powered image upscaling
+---
+
+## Install the package
+
+Install OpenComic AI Bin using your preferred package manager:
+
+<CodeGroup>
+
+```bash npm
+npm install opencomic-ai-bin
+```
+
+```bash yarn
+yarn add opencomic-ai-bin
+```
+
+```bash pnpm
+pnpm add opencomic-ai-bin
+```
+
+</CodeGroup>
+
+## System requirements
+
+### Platform support
+
+OpenComic AI Bin provides pre-built binaries for multiple platforms and architectures:
+
+- **macOS**: x64 and arm64 (Apple Silicon)
+- **Windows**: x64 and arm64
+- **Linux**: x64 and arm64
+
+The package includes binaries for Real-CUGAN, Waifu2x, and Upscayl upscalers. Models are downloaded automatically when needed, so you don't need to install them separately.
+
+### GPU acceleration
+
+All included binaries use Vulkan for GPU acceleration. Ensure your system has Vulkan support for optimal performance:
+
+- **macOS**: Built-in support via MoltenVK
+- **Windows**: Install latest GPU drivers
+- **Linux**: Install `vulkan-tools` and GPU-specific Vulkan drivers
+
+## Optional dependencies
+
+### ICC profile support with sharp
+
+To preserve ICC color profiles when processing images, install the `sharp` package:
+
+<CodeGroup>
+
+```bash npm
+npm install sharp
+```
+
+```bash yarn
+yarn add sharp
+```
+
+```bash pnpm
+pnpm add sharp
+```
+
+</CodeGroup>
+
+Once installed, configure OpenComic AI Bin to use sharp for ICC profile preservation:
+
+```javascript
+import OpenComicAI from 'opencomic-ai-bin';
+import sharp from 'sharp';
+
+OpenComicAI.keepIccProfile(sharp);
+```
+
+<Note>
+ICC profile preservation is optional. If you don't need color profile management, you can skip installing sharp.
+</Note>
+
+## Next steps
+
+<Card title="Quickstart" icon="rocket" href="/quickstart">
+  Get started with your first image upscaling example
+</Card>

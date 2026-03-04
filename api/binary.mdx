@@ -1,0 +1,150 @@
+---
+title: binary
+description: Get path to the binary executable for a model
+---
+
+## Signature
+
+```typescript
+OpenComicAI.binary(model: Model): string
+```
+
+## Description
+
+Returns the absolute path to the binary executable required for processing a specific model. The path is platform-specific and automatically selects the correct binary for your operating system and architecture.
+
+This method is primarily used internally by the library, but can be useful for:
+- Debugging binary locations
+- Running binaries directly with custom parameters
+- Verifying binary availability
+
+## Parameters
+
+<ParamField path="model" type="Model" required>
+  The model name to get the binary path for. Must be a valid model from the available models list.
+  
+  See [Model](/api/types#model) for available model names.
+</ParamField>
+
+## Returns
+
+<ResponseField name="string" type="string">
+  Absolute path to the binary executable for the specified model's upscaler.
+</ResponseField>
+
+## Platform-specific paths
+
+The binary path varies by platform and architecture:
+
+### Linux
+- **x64**: `linux/x64/{upscaler}/{upscaler-binary}`
+- **arm64**: `linux/arm64/{upscaler}/{upscaler-binary}`
+
+### macOS
+- **x64**: `mac/x64/{upscaler}/{upscaler-binary}.app`
+- **arm64**: `mac/arm64/{upscaler}/{upscaler-binary}.app`
+
+### Windows
+- **x64**: `win/x64/{upscaler}/{upscaler-binary}.exe`
+- **arm64**: `win/arm64/{upscaler}/{upscaler-binary}.exe` (upscayl only)
+
+Where `{upscaler}` is one of: `realcugan`, `waifu2x`, or `upscayl`.
+
+## Examples
+
+### Get binary path for a model
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const binaryPath = OpenComicAI.binary('realcugan');
+console.log(binaryPath);
+// Example output on Linux x64:
+// /path/to/node_modules/opencomic-ai-bin/linux/x64/realcugan/realcugan-ncnn-vulkan
+```
+
+### Check binary paths for different models
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const models = ['realcugan', 'waifu2x-models-cunet', 'realesrgan-x4plus-anime'];
+
+for (const model of models) {
+  const binaryPath = OpenComicAI.binary(model);
+  console.log(`${model}: ${binaryPath}`);
+}
+```
+
+### Verify binary exists
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+import fs from 'fs';
+
+const model = 'realcugan';
+const binaryPath = OpenComicAI.binary(model);
+
+if (fs.existsSync(binaryPath)) {
+  console.log(`Binary found: ${binaryPath}`);
+} else {
+  console.log(`Binary not found: ${binaryPath}`);
+}
+```
+
+### Get all binary paths
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const binaries = new Set<string>();
+
+for (const model of OpenComicAI.modelsList) {
+  try {
+    const binaryPath = OpenComicAI.binary(model);
+    binaries.add(binaryPath);
+  } catch (error) {
+    console.error(`Error getting binary for ${model}:`, error);
+  }
+}
+
+console.log('Unique binaries:', Array.from(binaries));
+```
+
+### Custom binary path in Electron
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+import { app } from 'electron';
+
+// Set custom dirname for unpacked asar in Electron
+const dirname = OpenComicAI.__dirname.replace(
+  /app(-(?:arm64|x64))?\.asar/,
+  'app$1.asar.unpacked'
+);
+OpenComicAI.setDirname(dirname);
+
+// Now binary() will return paths in the unpacked asar
+const binaryPath = OpenComicAI.binary('realcugan');
+console.log(binaryPath);
+```
+
+## Error handling
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+try {
+  const binaryPath = OpenComicAI.binary('invalid-model');
+} catch (error) {
+  console.error(error.message);
+  // Output: Model not found: invalid-model
+}
+```
+
+## Related
+
+- [model](/api/model) - Get model information including upscaler type
+- [setDirname](/api/set-dirname) - Configure base directory for binaries
+- [Model](/api/types#model) - Available model names
+- [Upscaler](/api/types#upscaler) - Available upscaler types

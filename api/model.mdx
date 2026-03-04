@@ -1,0 +1,220 @@
+---
+title: model
+description: Get model information
+---
+
+## Signature
+
+```typescript
+OpenComicAI.model(model: Model = DEFAULT_MODEL): ModelObject
+```
+
+## Description
+
+Returns detailed information about a specific model, including its name, upscaler type, supported scales, noise levels, file paths, and performance characteristics.
+
+This method is useful for:
+- Discovering model capabilities (scales, noise levels)
+- Getting model file paths for verification
+- Understanding model performance characteristics
+- Building dynamic UIs based on model properties
+
+## Parameters
+
+<ParamField path="model" type="Model" default="DEFAULT_MODEL">
+  The model name to get information for. If omitted, returns information for the default model.
+  
+  See [Model](/api/types#model) for available model names.
+</ParamField>
+
+## Returns
+
+<ResponseField name="ModelObject" type="ModelObject">
+  Object containing detailed model information:
+  
+  - `key` (Model) - Model identifier
+  - `name` (string) - Human-readable model name
+  - `upscaler` (Upscaler) - Upscaler engine used ('realcugan' | 'waifu2x' | 'upscayl')
+  - `type` (ModelType) - Model category ('upscale' | 'descreen' | 'artifact-removal')
+  - `scales` (number[]) - Supported scale factors
+  - `noise` (number[] | undefined) - Supported noise reduction levels (0-3)
+  - `latency` (number) - Relative performance metric (0.5 = fastest, 10 = slowest)
+  - `speed` (Speed) - Human-readable speed rating
+  - `folder` (string) - Model folder name
+  - `path` (string) - Absolute path to model directory
+  - `files` (string[]) - List of required model files
+  - `scaleFiles` - Scale-specific model files mapping (if applicable)
+  - `supportCurrentPlatform` (boolean) - Whether model is supported on current platform
+  
+  See [ModelObject](/api/types#modelobject) for full type definition.
+</ResponseField>
+
+## Examples
+
+### Get basic model information
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+OpenComicAI.setModelsPath('./models');
+
+const modelInfo = OpenComicAI.model('realcugan');
+
+console.log(modelInfo);
+// {
+//   name: 'RealCUGAN',
+//   upscaler: 'realcugan',
+//   type: 'upscale',
+//   scales: [2, 3, 4],
+//   noise: [0, 1, 2, 3],
+//   latency: 1.5,
+//   speed: 'Fast',
+//   folder: 'models-se',
+//   path: './models/upscale/models-se',
+//   files: [...],
+//   supportCurrentPlatform: true
+// }
+```
+
+### Check supported scales
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const modelInfo = OpenComicAI.model('realesrgan-x4plus-anime');
+
+console.log(`Supported scales: ${modelInfo.scales.join(', ')}`);
+// Output: Supported scales: 2, 3, 4
+
+const desiredScale = 4;
+if (modelInfo.scales.includes(desiredScale)) {
+  console.log(`Model supports ${desiredScale}x upscaling`);
+}
+```
+
+### Find closest supported scale
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const modelInfo = OpenComicAI.model('realcugan');
+const desiredScale = 3.5;
+
+// Use OpenComicAI.closest() to find nearest supported scale
+const closestScale = OpenComicAI.closest(modelInfo.scales, desiredScale);
+
+console.log(`Closest scale to ${desiredScale}x: ${closestScale}x`);
+// Output: Closest scale to 3.5x: 4x
+```
+
+### Check if model supports noise reduction
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const modelInfo = OpenComicAI.model('waifu2x-models-cunet');
+
+if (modelInfo.noise && modelInfo.noise.length > 0) {
+  console.log(`Supports noise reduction levels: ${modelInfo.noise.join(', ')}`);
+} else {
+  console.log('Does not support noise reduction');
+}
+```
+
+### Get model file paths
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+import fs from 'fs';
+
+OpenComicAI.setModelsPath('./models');
+
+const modelInfo = OpenComicAI.model('realcugan');
+
+console.log(`Model path: ${modelInfo.path}`);
+console.log('Required files:');
+
+for (const file of modelInfo.files) {
+  const filePath = `${modelInfo.path}/${file}`;
+  const exists = fs.existsSync(filePath);
+  console.log(`  ${file}: ${exists ? '✓' : '✗'}`);
+}
+```
+
+### Compare model performance
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const models = ['realcugan', 'realesrgan-x4plus-anime', 'ultrasharp-4x'];
+
+const modelsBySpeed = models
+  .map(model => ({
+    model,
+    info: OpenComicAI.model(model)
+  }))
+  .sort((a, b) => a.info.latency - b.info.latency);
+
+console.log('Models by speed (fastest first):');
+for (const { model, info } of modelsBySpeed) {
+  console.log(`${info.name}: ${info.speed} (latency: ${info.latency})`);
+}
+```
+
+### List all models of a specific type
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+const descreenModels = OpenComicAI.modelsTypeList['descreen'];
+
+console.log('Available descreen models:');
+for (const modelKey of descreenModels) {
+  const modelInfo = OpenComicAI.model(modelKey);
+  console.log(`- ${modelInfo.name} (${modelInfo.upscaler})`);
+}
+```
+
+### Build dynamic UI options
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+function getModelOptions(modelKey: string) {
+  const modelInfo = OpenComicAI.model(modelKey);
+  
+  return {
+    name: modelInfo.name,
+    scales: modelInfo.scales,
+    supportsNoise: modelInfo.noise && modelInfo.noise.length > 0,
+    noiseLevels: modelInfo.noise || [],
+    speed: modelInfo.speed,
+    type: modelInfo.type,
+  };
+}
+
+const options = getModelOptions('realcugan');
+console.log(options);
+```
+
+## Error handling
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+try {
+  const modelInfo = OpenComicAI.model('invalid-model');
+} catch (error) {
+  console.error(error.message);
+  // Output: Model not found: invalid-model
+}
+```
+
+## Related
+
+- [binary](/api/binary) - Get binary executable path for a model
+- [closest](/api/closest) - Find closest supported scale or noise level
+- [models](/api/models) - Object containing all available models
+- [modelsList](/api/models-list) - Array of all model names
+- [modelsTypeList](/api/models-type-list) - Models organized by type
+- [ModelObject](/api/types#modelobject) - Model information type

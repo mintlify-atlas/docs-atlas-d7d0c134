@@ -1,0 +1,105 @@
+---
+title: modelsTypeList
+description: Models organized by type in array format
+---
+
+## Overview
+
+The `OpenComicAI.modelsTypeList` static property provides model keys organized by type in an object with array values.
+
+## Type
+
+```typescript
+static modelsTypeList: Record<ModelType, Model[]>
+```
+
+## Structure
+
+```typescript
+{
+  upscale: Model[],
+  descreen: Model[],
+  'artifact-removal': Model[]
+}
+```
+
+## Example usage
+
+```javascript
+import OpenComicAI from '@opencomic/ai-bin';
+
+// Get all upscale model keys
+const upscaleModels = OpenComicAI.modelsTypeList.upscale;
+console.log(upscaleModels);
+// ['realcugan', 'realesr-animevideov3', 'realesrgan-x4plus', ...]
+
+// Get all descreen model keys
+const descreenModels = OpenComicAI.modelsTypeList.descreen;
+console.log(descreenModels);
+// ['opencomic-ai-descreen-hard-compact', 'opencomic-ai-descreen-hard-lite', ...]
+
+// Get all artifact removal model keys
+const artifactModels = OpenComicAI.modelsTypeList['artifact-removal'];
+console.log(artifactModels);
+// ['opencomic-ai-artifact-removal-compact', 'opencomic-ai-artifact-removal-lite', ...]
+```
+
+## Counting models by type
+
+```javascript
+// Count models in each category
+const counts = {
+  upscale: OpenComicAI.modelsTypeList.upscale.length,
+  descreen: OpenComicAI.modelsTypeList.descreen.length,
+  artifactRemoval: OpenComicAI.modelsTypeList['artifact-removal'].length
+};
+
+console.log(counts);
+// { upscale: 24, descreen: 4, artifactRemoval: 7 }
+```
+
+## Building a model selector
+
+```javascript
+// Create grouped options for a select menu
+function getModelOptions() {
+  return Object.entries(OpenComicAI.modelsTypeList).map(([type, models]) => ({
+    label: type.charAt(0).toUpperCase() + type.slice(1),
+    options: models.map(key => ({
+      value: key,
+      label: OpenComicAI.models[type][key].name
+    }))
+  }));
+}
+
+const options = getModelOptions();
+// [
+//   { label: 'Upscale', options: [{ value: 'realcugan', label: 'RealCUGAN' }, ...] },
+//   { label: 'Descreen', options: [...] },
+//   { label: 'Artifact-removal', options: [...] }
+// ]
+```
+
+## Iterating by type
+
+```javascript
+// Process all models grouped by type
+for (const [type, modelKeys] of Object.entries(OpenComicAI.modelsTypeList)) {
+  console.log(`\n${type.toUpperCase()} MODELS:`);
+  
+  for (const key of modelKeys) {
+    const model = OpenComicAI.models[type][key];
+    console.log(`  - ${model.name} (${model.speed})`);
+  }
+}
+```
+
+## Related properties
+
+- [models](/api/models) - Full model objects organized by type
+- [modelsList](/api/models-list) - Flat array of all model keys
+
+## See also
+
+- [ModelType type](/api/types#modeltype)
+- [Model type](/api/types#model)

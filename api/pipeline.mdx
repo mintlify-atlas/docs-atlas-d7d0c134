@@ -1,0 +1,185 @@
+---
+title: pipeline
+description: Process an image through one or more AI models
+---
+
+## Signature
+
+```typescript
+OpenComicAI.pipeline(
+  source: string,
+  dest: string,
+  steps: OpenComicAIOptions[],
+  progress?: ((progress?: number) => void) | false,
+  downloading?: Downloading | false
+): Promise<string>
+```
+
+## Description
+
+Process an image through one or more AI models sequentially. This is the main method for upscaling, descreening, and removing artifacts from images. The pipeline automatically downloads models if they're not available locally, and can preserve ICC color profiles from the source image.
+
+## Parameters
+
+<ParamField path="source" type="string" required>
+  Path to the source image file. Supports formats: jpg, png, webp, bmp, tiff, and more.
+</ParamField>
+
+<ParamField path="dest" type="string" required>
+  Path where the processed image will be saved. The file extension determines the output format.
+</ParamField>
+
+<ParamField path="steps" type="OpenComicAIOptions[]" required>
+  Array of processing steps to apply sequentially. Each step specifies a model and its parameters.
+  
+  See [OpenComicAIOptions](/api/types#opencomicaioptions) for available options.
+</ParamField>
+
+<ParamField path="progress" type="((progress?: number) => void) | false">
+  Optional callback function that receives progress updates as a number between 0 and 1. Pass `false` to disable progress tracking.
+  
+  The progress value represents overall completion across all steps:
+  - `0` = just started
+  - `0.5` = halfway through all steps
+  - `1` = completed
+</ParamField>
+
+<ParamField path="downloading" type="Downloading | false">
+  Optional callbacks for monitoring model download progress. Pass `false` to disable download callbacks.
+  
+  See [Downloading](/api/types#downloading) for callback options.
+</ParamField>
+
+## Returns
+
+<ResponseField name="Promise<string>" type="string">
+  Returns a promise that resolves to the path of the processed image (same as `dest` parameter).
+</ResponseField>
+
+## ICC profile handling
+
+If you've configured ICC profile preservation using `OpenComicAI.keepIccProfile(sharp)`, the pipeline will:
+
+1. Extract the ICC profile from the source image
+2. Apply it to the processed output image
+3. Maintain color accuracy throughout the processing pipeline
+
+The ICC profile is applied after all processing steps complete, ensuring the output matches the color space of the original image.
+
+## Examples
+
+### Basic upscaling
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+OpenComicAI.setModelsPath('./models');
+
+await OpenComicAI.pipeline(
+  './input.jpg',
+  './output.jpg',
+  [
+    {
+      model: 'realcugan',
+      scale: 4,
+      noise: 0,
+    }
+  ]
+);
+```
+
+### Multi-step processing with progress
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+OpenComicAI.setModelsPath('./models');
+
+await OpenComicAI.pipeline(
+  './input.jpg',
+  './output.jpg',
+  [
+    {
+      model: '1x_halftone_patch_060000_G', // Remove halftone patterns
+    },
+    {
+      model: 'realcugan', // Upscale 4x
+      scale: 4,
+      noise: 0,
+    }
+  ],
+  (progress) => {
+    console.log(`Processing: ${Math.round(progress * 100)}%`);
+  }
+);
+```
+
+### Complete example with download tracking
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+import sharp from 'sharp';
+
+// Configure models path
+OpenComicAI.setModelsPath('./models');
+
+// Keep ICC profile from input image
+OpenComicAI.keepIccProfile(sharp);
+
+await OpenComicAI.pipeline(
+  './input.jpg',
+  './output.jpg',
+  [
+    {
+      model: '1x_halftone_patch_060000_G',
+    },
+    {
+      model: 'realcugan',
+      scale: 4,
+      noise: 0,
+    }
+  ],
+  (progress) => {
+    console.log(`Processing: ${Math.round(progress * 100)}%`);
+  },
+  {
+    start: () => {
+      console.log('Start download');
+    },
+    progress: (progress) => {
+      console.log(`Downloading: ${Math.round(progress * 100)}%`);
+    },
+    end: () => {
+      console.log('End download');
+    },
+  }
+);
+```
+
+### Processing with custom parameters
+
+```typescript
+await OpenComicAI.pipeline(
+  './input.png',
+  './output.png',
+  [
+    {
+      model: 'realesrgan-x4plus-anime',
+      scale: 4,
+      tileSize: 512,  // Adjust for GPU memory
+      gpuId: '0',     // Use specific GPU
+      tta: true,      // Enable test-time augmentation
+    }
+  ],
+  (progress) => {
+    console.log(`Progress: ${progress}`);
+  }
+);
+```
+
+## Related
+
+- [preload](/api/preload) - Preload models before processing
+- [model](/api/model) - Get model information
+- [OpenComicAIOptions](/api/types#opencomicaioptions) - Available step options
+- [Downloading](/api/types#downloading) - Download callback interface

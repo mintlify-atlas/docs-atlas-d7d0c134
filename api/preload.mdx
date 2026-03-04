@@ -1,0 +1,169 @@
+---
+title: preload
+description: Preload models to daemon or download models
+---
+
+## Signature
+
+```typescript
+OpenComicAI.preload(
+  steps: OpenComicAIOptions[],
+  downloading?: Downloading | false
+): Promise<void>
+```
+
+## Description
+
+Preload models before processing images. This method serves two purposes:
+
+1. **Download models**: Ensures all required model files are downloaded and available locally before processing begins
+2. **Daemon mode**: For `upscayl` models, spawns daemon processes that keep models loaded in memory, significantly improving processing speed for multiple images
+
+Daemons are only used with compatible models (upscayl-based models) when `OpenComicAI.setConcurrentDaemons()` is set to a value greater than 0.
+
+## Parameters
+
+<ParamField path="steps" type="OpenComicAIOptions[]" required>
+  Array of processing steps to preload. Each step specifies a model and its parameters.
+  
+  See [OpenComicAIOptions](/api/types#opencomicaioptions) for available options.
+</ParamField>
+
+<ParamField path="downloading" type="Downloading | false">
+  Optional callbacks for monitoring model download progress. Pass `false` to disable download callbacks.
+  
+  See [Downloading](/api/types#downloading) for callback options.
+</ParamField>
+
+## Returns
+
+<ResponseField name="Promise<void>" type="void">
+  Returns a promise that resolves when all models are downloaded and daemons are started (if enabled).
+</ResponseField>
+
+## Daemon mode
+
+When daemon mode is enabled (`upscayl` models only):
+
+- Models are loaded into memory once and kept running
+- Subsequent image processing is 3-7x faster
+- Multiple daemons can run concurrently for parallel processing
+- Daemons automatically shut down after the configured idle timeout
+
+See the [README performance comparison](https://github.com/ollm/opencomic-ai-bin#daemon-comparative-performance) for benchmarks.
+
+## Examples
+
+### Basic preload
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+OpenComicAI.setModelsPath('./models');
+
+// Download models if not available
+await OpenComicAI.preload([
+  {
+    model: 'realcugan',
+    scale: 4,
+    noise: 0,
+  }
+]);
+
+// Now pipeline() will run immediately without downloading
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  {
+    model: 'realcugan',
+    scale: 4,
+    noise: 0,
+  }
+]);
+```
+
+### Preload with daemon mode
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+OpenComicAI.setModelsPath('./models');
+
+// Enable daemon mode with 3 concurrent daemons
+OpenComicAI.setConcurrentDaemons(3);
+
+// Set daemon idle timeout to 60 seconds
+OpenComicAI.setDaemonIdleTimeout(60000);
+
+// Preload model and start daemon
+await OpenComicAI.preload([
+  {
+    model: 'realesrgan-x4plus-anime',
+    scale: 4,
+  }
+]);
+
+// Process multiple images with daemon (much faster)
+for (let i = 0; i < 100; i++) {
+  await OpenComicAI.pipeline(
+    `./input-${i}.jpg`,
+    `./output-${i}.jpg`,
+    [{ model: 'realesrgan-x4plus-anime', scale: 4 }]
+  );
+}
+
+// Close daemons when done
+OpenComicAI.closeAllDaemons();
+```
+
+### Preload with download tracking
+
+```typescript
+await OpenComicAI.preload(
+  [
+    {
+      model: '1x_halftone_patch_060000_G',
+    },
+    {
+      model: 'realcugan',
+      scale: 4,
+      noise: 0,
+    }
+  ],
+  {
+    start: () => {
+      console.log('Starting model download...');
+    },
+    progress: (progress) => {
+      console.log(`Downloading: ${Math.round(progress * 100)}%`);
+    },
+    end: () => {
+      console.log('Download complete');
+    },
+  }
+);
+```
+
+### Preload multiple models
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+OpenComicAI.setModelsPath('./models');
+OpenComicAI.setConcurrentDaemons(3);
+
+// Preload all models you'll use
+await OpenComicAI.preload([
+  { model: '1x_halftone_patch_060000_G' },
+  { model: 'realesrgan-x4plus-anime', scale: 4 },
+  { model: 'ultrasharp-4x', scale: 4 },
+]);
+
+// All models are now ready for fast processing
+```
+
+## Related
+
+- [pipeline](/api/pipeline) - Process images with loaded models
+- [setConcurrentDaemons](/api/set-concurrent-daemons) - Configure daemon mode
+- [setDaemonIdleTimeout](/api/set-daemon-idle-timeout) - Set daemon timeout
+- [closeAllDaemons](/api/close-all-daemons) - Stop all daemons
+- [OpenComicAIOptions](/api/types#opencomicaioptions) - Available step options

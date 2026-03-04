@@ -1,0 +1,245 @@
+---
+title: Artifact removal models
+description: AI models for removing JPEG compression artifacts and image degradation
+---
+
+Artifact removal models clean up JPEG compression artifacts, blur, noise, and other image degradation. These models are essential for restoring quality to compressed comic scans and web images.
+
+## What are compression artifacts?
+
+JPEG compression creates visible artifacts including:
+
+- **Blocking**: 8x8 pixel blocks visible in smooth areas
+- **Ringing**: Halos around sharp edges
+- **Color banding**: Reduced color depth in gradients
+- **Blur**: Loss of fine detail and sharpness
+- **Noise**: Random color variations
+
+Artifact removal models are trained to reverse this degradation and restore image quality.
+
+## Available models
+
+All artifact removal models operate at 1x scale, preserving the original resolution while improving quality.
+
+### OpenComic AI models
+
+#### OpenComic AI Artifact Removal Compact
+
+- **Model ID**: `opencomic-ai-artifact-removal-compact`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 0.5s (Very Fast)
+- **Source**: [ollm/opencomic-ai-training](https://github.com/ollm/opencomic-ai-training)
+
+Ultra-fast compact model for general artifact removal. Excellent for batch processing and real-time workflows.
+
+**Best for**:
+- Quick artifact cleanup
+- Batch processing
+- Moderate compression artifacts
+
+#### OpenComic AI Artifact Removal Lite
+
+- **Model ID**: `opencomic-ai-artifact-removal-lite`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 2.97s (Fast)
+- **Source**: [ollm/opencomic-ai-training](https://github.com/ollm/opencomic-ai-training)
+
+Larger model with improved quality and detail preservation.
+
+**Best for**:
+- High-quality restoration
+- Complex artifacts
+- Professional workflows
+
+#### OpenComic AI Artifact Removal
+
+- **Model ID**: `opencomic-ai-artifact-removal`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 8.21s (Slow)
+- **Source**: [ollm/opencomic-ai-training](https://github.com/ollm/opencomic-ai-training)
+
+Full-size model with maximum quality. Best results for heavily compressed images.
+
+**Best for**:
+- Archival quality restoration
+- Severely compressed images
+- Maximum quality requirements
+
+### JPEG restoration models
+
+#### NMKD Jaywreck3 Lite
+
+- **Model ID**: `1x_NMKD-Jaywreck3-Lite_320k`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 2.98s (Fast)
+- **Source**: [NMKD.de](https://nmkd.de/?esrgan)
+
+Community model trained for JPEG artifact removal with 320k iterations.
+
+**Best for**:
+- JPEG-specific artifacts
+- Web images
+- Social media content
+
+#### NMKD Jaywreck3 Soft Lite
+
+- **Model ID**: `1x_NMKD-Jaywreck3-Soft-Lite_320k`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 2.98s (Fast)
+- **Source**: [NMKD.de](https://nmkd.de/?esrgan)
+
+Softer variant that preserves more of the original image character while removing artifacts.
+
+**Best for**:
+- Natural-looking restoration
+- Subtle artifact removal
+- Preserving artistic style
+
+#### SaiyaJin DeJpeg
+
+- **Model ID**: `1x-SaiyaJin-DeJpeg`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 8.2s (Slow)
+- **Source**: [OpenModelDB](https://openmodeldb.info/models/1x-SaiyaJin-DeJpeg)
+
+Specialized JPEG decompression model focusing on blocking and ringing artifacts.
+
+**Best for**:
+- Heavy JPEG compression
+- Blocking artifacts
+- Old web images
+
+#### JPEG Destroyer V2
+
+- **Model ID**: `1x_JPEGDestroyerV2_96000G`
+- **Upscaler**: `upscayl`
+- **Scale**: 1x
+- **Latency**: 8.22s (Slow)
+- **Source**: [Hugging Face](https://huggingface.co/utnah/esrgan)
+
+Aggressive JPEG artifact removal with focus on severe compression.
+
+**Best for**:
+- Heavily compressed images
+- Multiple recompression artifacts
+- Extreme restoration cases
+
+## Using artifact removal models
+
+### Basic artifact removal
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+await OpenComicAI.pipeline('./compressed.jpg', './restored.jpg', [
+  { model: 'opencomic-ai-artifact-removal-compact' }
+]);
+```
+
+### Artifact removal with upscaling
+
+Apply artifact removal before upscaling for best results:
+
+```typescript
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'opencomic-ai-artifact-removal-compact' },
+  { model: 'realesrgan-x4plus-anime', scale: 4 }
+]);
+```
+
+### Complete restoration pipeline
+
+Combine descreening, artifact removal, and upscaling:
+
+```typescript
+await OpenComicAI.pipeline('./scan.jpg', './restored.jpg', [
+  { model: 'opencomic-ai-descreen-hard-compact' },
+  { model: 'opencomic-ai-artifact-removal-lite' },
+  { model: 'realcugan', scale: 4, noise: 0 }
+]);
+```
+
+<Tip>
+For heavily compressed images, consider using multiple passes with different artifact removal models.
+</Tip>
+
+## Performance comparison
+
+| Model | Latency | Speed Category | Strength |
+|-------|---------|----------------|----------|
+| `opencomic-ai-artifact-removal-compact` | 0.5s | Very Fast | Moderate |
+| `opencomic-ai-artifact-removal-lite` | 2.97s | Fast | Strong |
+| `1x_NMKD-Jaywreck3-Lite_320k` | 2.98s | Fast | Strong |
+| `1x_NMKD-Jaywreck3-Soft-Lite_320k` | 2.98s | Fast | Subtle |
+| `1x-SaiyaJin-DeJpeg` | 8.2s | Slow | Very Strong |
+| `opencomic-ai-artifact-removal` | 8.21s | Slow | Very Strong |
+| `1x_JPEGDestroyerV2_96000G` | 8.22s | Slow | Extreme |
+
+## Choosing the right model
+
+**For speed**: Use `opencomic-ai-artifact-removal-compact`
+
+**For quality**: Use `opencomic-ai-artifact-removal-lite` or `opencomic-ai-artifact-removal`
+
+**For JPEG-specific artifacts**: Use `1x_NMKD-Jaywreck3-Lite_320k` or `1x-SaiyaJin-DeJpeg`
+
+**For subtle restoration**: Use `1x_NMKD-Jaywreck3-Soft-Lite_320k`
+
+**For severe compression**: Use `1x_JPEGDestroyerV2_96000G` or `opencomic-ai-artifact-removal`
+
+**For batch processing**: Use `opencomic-ai-artifact-removal-compact`
+
+## How artifact removal works
+
+Artifact removal models use deep learning to:
+
+1. **Detect artifacts**: Identify compression patterns, blocking, and distortion
+2. **Reconstruct details**: Estimate original content before compression
+3. **Remove artifacts**: Eliminate blocking, ringing, and banding
+4. **Restore sharpness**: Recover lost edge definition and fine details
+5. **Preserve structure**: Maintain image composition and intentional blur
+
+<Note>
+Artifact removal models operate at 1x scale. They improve quality without changing resolution. Combine with upscaling models to increase size.
+</Note>
+
+## Types of artifacts removed
+
+### JPEG compression artifacts
+- 8x8 blocking in smooth areas
+- Ringing halos around edges
+- Mosquito noise near text and lines
+- Color bleeding and banding
+
+### Other degradation
+- Gaussian blur from resizing
+- Color quantization artifacts
+- Noise and grain
+- Loss of fine detail
+
+## Pipeline order recommendations
+
+1. **Descreen** - Remove halftone patterns first
+2. **Artifact removal** - Clean up compression artifacts
+3. **Upscale** - Increase resolution with clean input
+
+```typescript
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  { model: 'opencomic-ai-descreen-hard-compact' },      // 1. Remove patterns
+  { model: 'opencomic-ai-artifact-removal-compact' },   // 2. Clean artifacts
+  { model: 'realcugan', scale: 4, noise: 0 }           // 3. Upscale
+]);
+```
+
+## Related pages
+
+- [Upscale models](/models/upscale) - Increase image resolution
+- [Descreen models](/models/descreen) - Remove halftone patterns
+- [Pipeline API](/api/pipeline) - Combine multiple models
+- [Performance](/models/performance) - Model speed comparison

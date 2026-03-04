@@ -1,0 +1,81 @@
+---
+title: modelsList
+description: Array of all available model keys
+---
+
+## Overview
+
+The `OpenComicAI.modelsList` static property provides an array of all available model keys across all types.
+
+## Type
+
+```typescript
+static modelsList: Model[]
+```
+
+## Description
+
+This array contains all model keys from all model types (upscale, descreen, and artifact-removal) combined into a single flat array.
+
+## Example usage
+
+```javascript
+import OpenComicAI from '@opencomic/ai-bin';
+
+// Get all available models
+const allModels = OpenComicAI.modelsList;
+console.log(allModels);
+// ['realcugan', 'realesr-animevideov3', 'realesrgan-x4plus', ...]
+
+// Check if a model exists
+const modelExists = OpenComicAI.modelsList.includes('realcugan');
+console.log(modelExists); // true
+
+// Count total models
+const totalModels = OpenComicAI.modelsList.length;
+console.log(`Total models available: ${totalModels}`);
+```
+
+## Filtering models
+
+```javascript
+// Get model info for all models in the list
+const modelInfo = OpenComicAI.modelsList.map(key => {
+  const model = OpenComicAI.model(key);
+  return {
+    key,
+    name: model.name,
+    type: model.type,
+    speed: model.speed
+  };
+});
+
+// Filter models by type
+const upscaleModels = OpenComicAI.modelsList.filter(key => {
+  return OpenComicAI.model(key).type === 'upscale';
+});
+```
+
+## Validation
+
+```javascript
+function validateModel(modelKey) {
+  if (!OpenComicAI.modelsList.includes(modelKey)) {
+    throw new Error(`Invalid model: ${modelKey}`);
+  }
+  return true;
+}
+
+validateModel('realcugan'); // true
+validateModel('invalid-model'); // throws error
+```
+
+## Related properties
+
+- [models](/api/models) - Full model objects organized by type
+- [modelsTypeList](/api/models-type-list) - Models organized by type in array format
+
+## See also
+
+- [Model type](/api/types#model)
+- [model() method](/api/model)

@@ -1,0 +1,68 @@
+---
+title: models
+description: Access all available AI models organized by type
+---
+
+## Overview
+
+The `OpenComicAI.models` static property provides access to all available AI models organized by type.
+
+## Type
+
+```typescript
+static models: Record<ModelType, Record<string, ModelObject>>
+```
+
+## Structure
+
+The `models` object is organized hierarchically:
+
+- Top level: Model types (`upscale`, `descreen`, `artifact-removal`)
+- Second level: Model keys (string identifiers)
+- Values: `ModelObject` containing model configuration
+
+## Example usage
+
+```javascript
+import OpenComicAI from '@opencomic/ai-bin';
+
+// Access all upscale models
+const upscaleModels = OpenComicAI.models.upscale;
+
+// Access a specific model
+const realcugan = OpenComicAI.models.upscale['realcugan'];
+console.log(realcugan.name); // "RealCUGAN"
+console.log(realcugan.scales); // [2, 3, 4]
+
+// Access descreen models
+const descreenModels = OpenComicAI.models.descreen;
+
+// Access artifact removal models
+const artifactModels = OpenComicAI.models['artifact-removal'];
+```
+
+## Iterating through models
+
+```javascript
+// Iterate through all upscale models
+for (const [key, model] of Object.entries(OpenComicAI.models.upscale)) {
+  console.log(`${key}: ${model.name}`);
+  console.log(`  Upscaler: ${model.upscaler}`);
+  console.log(`  Scales: ${model.scales.join(', ')}`);
+  console.log(`  Speed: ${model.speed}`);
+}
+
+// Get all model types
+const modelTypes = Object.keys(OpenComicAI.models); // ['upscale', 'descreen', 'artifact-removal']
+```
+
+## Related properties
+
+- [modelsList](/api/models-list) - Array of all model keys
+- [modelsTypeList](/api/models-type-list) - Models organized by type in array format
+
+## See also
+
+- [ModelObject interface](/api/types#modelobject)
+- [ModelType type](/api/types#modeltype)
+- [model() method](/api/model)

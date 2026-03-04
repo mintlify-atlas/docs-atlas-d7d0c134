@@ -1,0 +1,322 @@
+---
+title: Daemon mode
+description: Significantly improve batch processing performance by preloading models
+---
+
+## Overview
+
+Daemon mode allows you to preload AI models into memory and reuse them across multiple images. This eliminates the model loading overhead for each image, providing dramatic performance improvements for batch processing.
+
+<Note>
+Daemon mode is only available for models that use the `upscayl` binary. Models using `realcugan` or `waifu2x` binaries do not support daemon mode.
+</Note>
+
+## Performance benefits
+
+The performance improvement from daemon mode is substantial. Here are real benchmarks from processing 10 images (512x512px):
+
+### OpenComic AI Upscale Lite
+
+- **Without daemon**: 52.087s total (5.2s per image)
+- **With daemon**: 7.646s total (0.76s per image)
+- **Speedup**: 6.81x faster
+
+### RealESRGAN x4 Plus
+
+- **Without daemon**: 73.273s total (7.3s per image)
+- **With daemon**: 23.199s total (2.3s per image)
+- **Speedup**: 3.16x faster
+
+### Why daemon mode is faster
+
+Without daemon mode, each image requires:
+1. Loading the model weights from disk (~2-5 seconds)
+2. Processing the image (~0.7-2.2 seconds)
+3. Unloading the model
+
+With daemon mode:
+1. Model is loaded once at startup (~0.5-1.2 seconds)
+2. Each image processes immediately (~0.7-2.2 seconds)
+3. Model stays in memory for reuse
+
+## Configuration
+
+Daemon mode is enabled by default with sensible defaults:
+
+### setConcurrentDaemons
+
+Control how many daemon processes can run simultaneously:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+// Allow up to 3 concurrent daemons (default)
+OpenComicAI.setConcurrentDaemons(3);
+
+// Allow more daemons for high-end systems
+OpenComicAI.setConcurrentDaemons(5);
+
+// Disable daemon mode entirely
+OpenComicAI.setConcurrentDaemons(0);
+```
+
+Each daemon consumes GPU memory for the loaded model. The optimal number depends on:
+
+- **GPU VRAM**: More VRAM allows more concurrent daemons
+- **CPU cores**: More cores can handle more concurrent processes
+- **Workload**: Different models processing simultaneously
+
+<Tip>
+For most systems, 3-5 concurrent daemons provides the best balance between performance and resource usage.
+</Tip>
+
+### setDaemonIdleTimeout
+
+Daemons automatically close after being idle for a specified timeout:
+
+```typescript
+// Close idle daemons after 60 seconds (default)
+OpenComicAI.setDaemonIdleTimeout(60000);
+
+// Keep daemons alive longer
+OpenComicAI.setDaemonIdleTimeout(300000); // 5 minutes
+
+// Close idle daemons quickly
+OpenComicAI.setDaemonIdleTimeout(10000); // 10 seconds
+```
+
+Longer timeouts keep models in memory for future use but consume resources. Shorter timeouts free resources faster but require reloading for new batches.
+
+## Preloading models
+
+For maximum performance, preload models before processing your batch:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+OpenComicAI.setModelsPath('./models');
+
+// Define your processing pipeline
+const steps = [
+  {
+    model: 'opencomic-ai-descreen-hard-compact',
+  },
+  {
+    model: 'realesr-animevideov3',
+    scale: 4,
+  }
+];
+
+// Preload all models in the pipeline
+await OpenComicAI.preload(steps, {
+  start: () => console.log('Downloading models...'),
+  progress: (p) => console.log(`Download: ${Math.round(p * 100)}%`),
+  end: () => console.log('Models ready'),
+});
+
+console.log('Models preloaded, starting batch processing...');
+
+// Now process images - they'll use the preloaded daemons
+for (const image of imagesToProcess) {
+  await OpenComicAI.pipeline(image.input, image.output, steps);
+}
+```
+
+### What preload does
+
+The `preload` method:
+
+1. Downloads any missing model files (if needed)
+2. Starts daemon processes for each model
+3. Loads model weights into memory
+4. Returns once all models are ready
+
+Subsequent `pipeline` calls will immediately use the preloaded daemons.
+
+## Closing daemons
+
+Manually close all running daemons to free resources:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+// Process your batch
+for (const image of images) {
+  await OpenComicAI.pipeline(image.input, image.output, steps);
+}
+
+// Clean up daemons when done
+OpenComicAI.closeAllDaemons();
+
+console.log('All daemons closed, resources freed');
+```
+
+<Note>
+Daemons automatically close after the idle timeout, so manual cleanup is optional. However, explicitly closing daemons is useful for long-running applications to free GPU memory immediately.
+</Note>
+
+## Batch processing example
+
+Here's a complete example demonstrating daemon mode for batch processing:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+import { readdir } from 'fs/promises';
+import path from 'path';
+
+async function batchProcess() {
+  OpenComicAI.setModelsPath('./models');
+  OpenComicAI.setConcurrentDaemons(3);
+  OpenComicAI.setDaemonIdleTimeout(60000);
+
+  const steps = [
+    { model: 'opencomic-ai-descreen-hard-compact' },
+    { model: 'realesr-animevideov3', scale: 4 },
+  ];
+
+  // Preload models before processing
+  console.log('Preloading models...');
+  await OpenComicAI.preload(steps);
+  console.log('Models ready!');
+
+  // Get all images
+  const inputDir = './input';
+  const outputDir = './output';
+  const files = await readdir(inputDir);
+  const images = files.filter(f => /\.(jpg|png|webp)$/i.test(f));
+
+  console.log(`Processing ${images.length} images...`);
+
+  // Process each image
+  for (let i = 0; i < images.length; i++) {
+    const file = images[i];
+    const input = path.join(inputDir, file);
+    const output = path.join(outputDir, file);
+
+    console.log(`[${i + 1}/${images.length}] Processing ${file}...`);
+
+    await OpenComicAI.pipeline(
+      input,
+      output,
+      steps,
+      (progress) => {
+        process.stdout.write(`\r  Progress: ${Math.round(progress * 100)}%`);
+      }
+    );
+
+    console.log('\n  Complete!');
+  }
+
+  // Clean up
+  OpenComicAI.closeAllDaemons();
+  console.log('Batch processing complete!');
+}
+
+batchProcess();
+```
+
+## Performance timing example
+
+Compare performance with and without daemon mode:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+async function comparePerformance() {
+  OpenComicAI.setModelsPath('./models');
+
+  const steps = [{ model: 'realesr-animevideov3', scale: 4 }];
+  const images = [
+    './img1.jpg',
+    './img2.jpg',
+    './img3.jpg',
+  ];
+
+  // Test without daemon mode
+  OpenComicAI.setConcurrentDaemons(0);
+  const startNoDaemon = Date.now();
+
+  for (let i = 0; i < images.length; i++) {
+    await OpenComicAI.pipeline(images[i], `./out-nodaemon-${i}.jpg`, steps);
+  }
+
+  const timeNoDaemon = Date.now() - startNoDaemon;
+  console.log(`Without daemon: ${timeNoDaemon}ms`);
+
+  // Test with daemon mode
+  OpenComicAI.setConcurrentDaemons(3);
+  await OpenComicAI.preload(steps);
+  const startDaemon = Date.now();
+
+  for (let i = 0; i < images.length; i++) {
+    await OpenComicAI.pipeline(images[i], `./out-daemon-${i}.jpg`, steps);
+  }
+
+  const timeDaemon = Date.now() - startDaemon;
+  console.log(`With daemon: ${timeDaemon}ms`);
+
+  const speedup = (timeNoDaemon / timeDaemon).toFixed(2);
+  console.log(`Speedup: ${speedup}x faster`);
+
+  OpenComicAI.closeAllDaemons();
+}
+
+comparePerformance();
+```
+
+## Daemon lifecycle
+
+Understanding how daemons are managed:
+
+1. **Creation**: A daemon is created the first time a model is used (or via `preload`)
+2. **Reuse**: Subsequent uses of the same model reuse the existing daemon
+3. **Queue**: If a daemon is busy, new requests are queued
+4. **Concurrency limit**: If the number of daemons exceeds `concurrentDaemons`, the least recently used idle daemon is closed
+5. **Idle timeout**: Daemons automatically close after being idle for `daemonIdleTimeout` milliseconds
+6. **Manual close**: `closeAllDaemons()` immediately closes all daemons
+
+## Best practices
+
+### Preload before batch processing
+
+```typescript
+// Good: Preload models before processing
+await OpenComicAI.preload(steps);
+for (const image of images) {
+  await OpenComicAI.pipeline(image.input, image.output, steps);
+}
+
+// Bad: Models load on first use, wasting time
+for (const image of images) {
+  await OpenComicAI.pipeline(image.input, image.output, steps);
+}
+```
+
+### Set appropriate concurrent daemons
+
+```typescript
+// GPU with 8GB VRAM
+OpenComicAI.setConcurrentDaemons(3);
+
+// GPU with 16GB+ VRAM
+OpenComicAI.setConcurrentDaemons(5);
+
+// Limited VRAM (4GB or less)
+OpenComicAI.setConcurrentDaemons(1);
+```
+
+### Clean up after batch jobs
+
+```typescript
+try {
+  await processBatch();
+} finally {
+  OpenComicAI.closeAllDaemons();
+}
+```
+
+## Next steps
+
+- Review [pipeline processing](/guides/pipeline-processing) to combine multiple models efficiently
+- Explore [model selection](/guides/model-selection) to understand which models support daemon mode
+- Check [basic usage](/guides/basic-usage) for fundamental concepts

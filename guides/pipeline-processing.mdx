@@ -1,0 +1,268 @@
+---
+title: Pipeline processing
+description: Process images through multiple AI models in sequence for optimal results
+---
+
+## Overview
+
+Pipeline processing allows you to chain multiple AI models together, applying different transformations in sequence. This is particularly useful for comic book images that need dehalftoning, artifact removal, and upscaling.
+
+## Multi-step processing
+
+The `pipeline` method accepts an array of processing steps, where each step can use a different model with different options:
+
+```typescript
+await OpenComicAI.pipeline('./input.jpg', './output.jpg', [
+  {
+    model: 'opencomic-ai-descreen-hard-compact',
+    // First step: remove halftone patterns
+  },
+  {
+    model: 'realcugan',
+    scale: 4,
+    noise: 0,
+    // Second step: upscale the descreened image
+  }
+]);
+```
+
+Each step processes the output of the previous step, creating a processing pipeline.
+
+## Chaining operations
+
+Different model types can be combined to achieve specific results:
+
+### Dehalftoning then upscaling
+
+The most common workflow for scanned comic books:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+
+OpenComicAI.setModelsPath('./models');
+
+await OpenComicAI.pipeline(
+  './input.jpg',
+  './output.jpg',
+  [
+    {
+      model: '1x_halftone_patch_060000_G',
+      // Remove halftone patterns
+    },
+    {
+      model: 'realcugan',
+      scale: 4,
+      noise: 0,
+      // Upscale to 4x
+    }
+  ],
+  (progress) => {
+    console.log(`Processing: ${Math.round(progress * 100)}%`);
+  }
+);
+```
+
+### Artifact removal, dehalftoning, and upscaling
+
+For heavily compressed or damaged images:
+
+```typescript
+await OpenComicAI.pipeline(
+  './compressed-comic.jpg',
+  './restored-comic.jpg',
+  [
+    {
+      model: 'opencomic-ai-artifact-removal-compact',
+      // First, remove JPEG artifacts
+    },
+    {
+      model: 'opencomic-ai-descreen-hard-compact',
+      // Then remove halftone patterns
+    },
+    {
+      model: 'realcugan',
+      scale: 4,
+      noise: 0,
+      // Finally upscale
+    }
+  ]
+);
+```
+
+### Multiple upscaling passes
+
+Some models work better at specific scales. You can chain them for very high upscaling factors:
+
+```typescript
+await OpenComicAI.pipeline(
+  './input.jpg',
+  './output.jpg',
+  [
+    {
+      model: 'realcugan',
+      scale: 4,
+      // First pass: 4x upscaling
+    },
+    {
+      model: 'realcugan',
+      scale: 2,
+      // Second pass: 2x upscaling (total 8x)
+    }
+  ]
+);
+```
+
+## Intermediate file handling
+
+The pipeline automatically manages intermediate files during processing:
+
+1. Each step (except the last) creates a temporary file with a random UUID filename
+2. The temporary file is used as input for the next step
+3. After a step completes, the previous temporary file is automatically deleted
+4. Only the final output file is preserved
+
+```typescript
+// You only need to specify source and final destination
+await OpenComicAI.pipeline(
+  './input.jpg',  // Source
+  './output.jpg', // Final destination
+  [
+    { model: 'step1' }, // Creates temp file: <uuid>.jpg
+    { model: 'step2' }, // Uses temp file, creates new temp file
+    { model: 'step3' }, // Uses temp file, outputs to ./output.jpg
+  ]
+);
+// All temporary files are cleaned up automatically
+```
+
+<Note>
+Temporary files are created in the same directory as the destination file and use the same file extension.
+</Note>
+
+## Progress tracking in pipelines
+
+When using multiple steps, the progress callback reports overall progress across all steps:
+
+```typescript
+await OpenComicAI.pipeline(
+  './input.jpg',
+  './output.jpg',
+  [
+    { model: 'step1' },
+    { model: 'step2' },
+    { model: 'step3' },
+  ],
+  (progress) => {
+    // progress ranges from 0 to 1 across all 3 steps
+    console.log(`Overall progress: ${Math.round(progress * 100)}%`);
+  }
+);
+```
+
+The library calculates overall progress using this formula:
+
+```typescript
+overallProgress = (completedSteps + currentStepProgress) / totalSteps
+```
+
+## Real-world example from README
+
+Here's the complete example from the README, demonstrating a typical workflow:
+
+```typescript
+import OpenComicAI from 'opencomic-ai-bin';
+import sharp from 'sharp';
+
+(async () => {
+  // Set the base directory for binary paths
+  OpenComicAI.setDirname(
+    OpenComicAI.__dirname.replace(/app(-(?:arm64|x64))?\.asar/, 'app$1.asar.unpacked')
+  );
+
+  // Models path - models will be downloaded if not found
+  OpenComicAI.setModelsPath('./models');
+
+  // Keep ICC profile from input image (requires sharp)
+  OpenComicAI.keepIccProfile(sharp);
+
+  await OpenComicAI.pipeline(
+    './input.jpg',
+    './output.jpg',
+    [
+      {
+        model: '1x_halftone_patch_060000_G',
+      },
+      {
+        model: 'realcugan',
+        scale: 4,
+        noise: 0,
+      }
+    ],
+    (progress) => {
+      console.log(`Processing: ${Math.round(progress * 100)}%`);
+    },
+    {
+      start: () => {
+        console.log('Start download');
+      },
+      progress: (progress) => {
+        console.log(`Downloading: ${Math.round(progress * 100)}%`);
+      },
+      end: () => {
+        console.log('End download');
+      },
+    }
+  );
+})();
+```
+
+## Best practices
+
+### Order matters
+
+Apply models in this recommended order:
+
+1. **Artifact removal** - Clean up compression artifacts first
+2. **Dehalftoning** - Remove halftone patterns before upscaling
+3. **Upscaling** - Finally increase resolution
+
+This order prevents amplifying artifacts and halftone patterns during upscaling.
+
+### Choose appropriate models for each step
+
+- Use fast, lightweight models ("compact" or "lite" variants) for early steps
+- Reserve slower, higher-quality models for the final upscaling step
+- See [model selection guide](/guides/model-selection) for details
+
+### Consider memory usage
+
+Each step increases image dimensions:
+
+```typescript
+// Starting with 1000x1000 image:
+[
+  { model: 'descreen', scale: 1 },     // Still 1000x1000
+  { model: 'upscale', scale: 2 },      // Now 2000x2000
+  { model: 'upscale', scale: 2 },      // Now 4000x4000 (16MB+)
+]
+```
+
+Adjust `tileSize` in later steps if you encounter memory issues:
+
+```typescript
+[
+  { model: 'descreen' },
+  { model: 'upscale', scale: 2 },
+  { model: 'upscale', scale: 2, tileSize: 256 }, // Smaller tiles for large image
+]
+```
+
+## Performance optimization
+
+For processing multiple images with the same pipeline, use [daemon mode](/guides/daemon-mode) to significantly improve performance by preloading models.
+
+## Next steps
+
+- Learn about [model selection](/guides/model-selection) to choose the right models for your pipeline
+- Explore [daemon mode](/guides/daemon-mode) for faster batch processing
+- Understand [ICC profile preservation](/guides/icc-profile) for color accuracy

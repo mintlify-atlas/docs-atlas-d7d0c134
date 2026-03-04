@@ -1,0 +1,81 @@
+---
+title: setDaemonIdleTimeout()
+description: Configure how long idle daemons remain active
+---
+
+Sets the idle timeout duration for daemon processes in daemon mode. Daemons that remain idle longer than this timeout are automatically closed to free up system resources.
+
+## Syntax
+
+```typescript
+OpenComicAI.setDaemonIdleTimeout(timeout?: number): void
+```
+
+## Parameters
+
+<ParamField path="timeout" type="number" default="60000">
+  Idle timeout in milliseconds. Daemons inactive for this duration will be closed automatically.
+</ParamField>
+
+## Returns
+
+`void` - This method does not return a value.
+
+## Behavior
+
+- Daemons track their last usage time
+- When a daemon is idle for longer than the timeout, it's eligible for closure
+- Automatic cleanup helps prevent memory leaks
+- Setting a longer timeout keeps daemons alive for more reuse
+- Setting a shorter timeout frees resources more quickly
+
+## Example
+
+```typescript
+import OpenComicAI from '@opencomic/ai-bin';
+
+// Set timeout to 2 minutes (120,000 milliseconds)
+OpenComicAI.setDaemonIdleTimeout(120000);
+
+// Set timeout to 30 seconds for aggressive cleanup
+OpenComicAI.setDaemonIdleTimeout(30000);
+
+// Daemons will automatically close after being idle
+await OpenComicAI.upscale({
+  input: 'image.jpg',
+  output: 'upscaled.jpg',
+  daemonMode: true
+});
+
+// Daemon stays alive for reuse within timeout window
+```
+
+## Timeout considerations
+
+### Short timeout (10-30 seconds)
+- Aggressive resource cleanup
+- Less daemon reuse
+- More startup overhead
+- Better for sporadic processing
+
+### Medium timeout (60 seconds - default)
+- Balanced approach
+- Good daemon reuse
+- Reasonable resource usage
+- Suitable for most applications
+
+### Long timeout (2-5 minutes)
+- Maximum daemon reuse
+- Daemons stay in memory longer
+- Less startup overhead
+- Best for continuous processing
+
+## Related
+
+- [setConcurrentDaemons()](/api/set-concurrent-daemons) - Control concurrent daemon count
+- [closeAllDaemons()](/api/close-all-daemons) - Manually close all daemons
+- [Daemon mode guide](/guides/daemon-mode) - Learn about daemon mode
+
+## Source
+
+Defined in index.mts:781-785
